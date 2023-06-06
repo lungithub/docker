@@ -1,0 +1,7 @@
+FROM centos:7.5.1804
+LABEL maintainer="devuser@example.com"
+
+RUN useradd -ms /bin/bash user1
+RUN echo "EXPORT 192.168.0.0/24" >> /etc/exports.list
+USER user1
+

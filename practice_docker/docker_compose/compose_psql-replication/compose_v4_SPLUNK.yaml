@@ -1,0 +1,43 @@
+#
+# Splunk Test
+#
+# https://hub.docker.com/r/splunk/splunk
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-with-splunk-free-license
+#
+# docker run --name so1 --hostname so1 -p 8000:8000 \
+#               -e "SPLUNK_PASSWORD=<password>" \
+#               -e "SPLUNK_START_ARGS=--accept-license" \
+#               -e "SPLUNK_LICENSE_URI=Free" \
+#               -it splunk/splunk:latest
+#
+# Password must contain at least: splunk  |    * 8 total printable ASCII character(s).              
+#
+# Add ing a "splunk volume" does not work
+#     volumes:
+#       - "splunk_data:/splunk"
+# -> docker compose up -d
+# service "splunk" refers to undefined volume splunk_data: invalid compose project
+#
+# Date: Mon 2023Jan16 16:52:27 PST
+#
+
+version: "2.13.0"
+services:
+
+#
+# SPLUNK
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
+#
+  splunk:
+    image: splunk/splunk:latest
+    hostname: splunk
+    container_name: splunk
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_LICENSE_URI=Fee
+      - SPLUNK_PASSWORD=abc12345
+    ports:
+      - 8000:8000            
+    volumes:
+      - "./:/hostdata"
+      

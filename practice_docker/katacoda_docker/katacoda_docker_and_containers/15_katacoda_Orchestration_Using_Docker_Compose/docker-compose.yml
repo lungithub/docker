@@ -1,0 +1,14 @@
+web:
+  build: .
+
+  links:
+    - redis
+
+  ports:
+    - "3000"
+    - "8000"
+
+redis:
+  image: redis:alpine
+  volumes:
+    - /var/redis/data:/data

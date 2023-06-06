@@ -1,0 +1,25 @@
+#!/bin/bash
+docker pull hello-world
+docker pull busyboxy
+docker pull redis
+docker pull nginx:alpine
+docker pull nginx:1.11-alpine
+docker pull node:10-alpine
+docker pull node:7
+docker pull node:7-onbuild
+docker pull alpine
+docker pull ubuntu:xenial
+docker pull ubuntu:14.04
+docker pull ubuntu:18.04
+docker pull centos:6.9
+docker pull centos:7.6.1810
+docker pull centos:latest
+docker pull weaveworks/scope
+docker pull katacoda/redis-node-docker-example
+docker pull scrapbook/docker-restart-example
+docker pull jwilder/nginx-proxy
+docker pull katacoda/docker-http-server
+docker pull ocelotuproar/alpine-node:5.7.1-onbuild
+docker pull jwilder/nginx-proxy:alpine
+docker pull golang:1.6-alpine
+docker pull training/sinatra

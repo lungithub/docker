@@ -1,0 +1,62 @@
+#
+# Test CentOS8
+#
+# https://hub.docker.com/layers/library/centos/8.4.2105/images/sha256-65a4aad1156d8a0679537cb78519a17eb7142e05a968b26a5361153006224fdc?context=explore
+#
+# Sun 2023Jan29 13:00:03 PST
+#
+services:
+
+#
+# NETUTILS
+#   
+  netutils:
+    image: nicolaka/netshoot
+    hostname: netutils
+    container_name: netutils
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+
+#
+# PRIMARY - CentOS8
+#  
+  centos8-1:
+    image: centos:8.4.2105
+    hostname: server01
+    container_name: c81
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+#
+# SECONDARY - CentOS8
+#  
+  centos8-2:
+    image: centos:8.4.2105
+    hostname: server02
+    container_name: c82
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD - CentOS8
+#  
+  centos8-3:
+    image: centos:8.4.2105
+    hostname: server03
+    container_name: c83
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 

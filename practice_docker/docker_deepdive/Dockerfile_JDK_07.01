@@ -1,0 +1,42 @@
+# Dockerfile based on the latest centos 7 image - non-provilegted user entry
+FROM centos:latest
+LABEL maintainer="devuser@example.com"
+
+RUN useradd -ms /bin/bash user1
+RUN echo "EXPORT 192.168.0.0/24" >> /etc/exports.list
+
+# want net-tools for the ifconfig output
+# need wget to download the package we want to install
+RUN yum update -y
+RUN yum install -y net-tools wget
+
+# go to the root homedir which is /root
+
+#:::::::::::::::
+
+## For JDK 9
+#RUN cd ~ && \
+#wget --no-cookies --no-check-certificate \
+#--header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" \
+#"http://download.oracle.com/otn-pub/java/jdk/9.0.1+11/jre-9.0.1_linux-x64_bin.rpm"
+
+# install the downloaded package
+#RUN yum localinstall -y ~/jre-9.0.1_linux-x64_bin.rpm
+
+#:::::::::::::::
+
+## For JDK 11
+RUN cd ~ && \
+wget --no-cookies --no-check-certificate \
+--header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" \
+"https://download.oracle.com/otn-pub/java/jdk/11.0.1+13/90cf5d8f270a4347a95050320eef3fb7/jdk-11.0.1_linux-x64_bin.rpm"
+
+# install the downloaded package
+RUN yum localinstall -y ~/jdk-11.0.1_linux-x64_bin.rpm
+
+#:::::::::::::::
+
+# change entry point to the regular user
+USER user1
+
+RUN cd ~ && echo "export JAVA_HOME=/usr/java/jdk1.9.0/jre" >> /home/user1/.bashrc

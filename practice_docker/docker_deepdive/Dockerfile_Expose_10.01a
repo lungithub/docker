@@ -1,0 +1,12 @@
+FROM centos:7.5.1804
+LABEL maintainer="devuser@example.com"
+
+# Run an OS update and install apache
+RUN yum update -y
+RUN yum install -y httpd net-tools
+
+# Create the default index file, so we know it is our container
+RUN echo "This is a custom index file build during the image creation" > /var/www/html/index.html
+
+# Set the entry point, start apache
+ENTRYPOINT apachectl "-DFOREGROUND"

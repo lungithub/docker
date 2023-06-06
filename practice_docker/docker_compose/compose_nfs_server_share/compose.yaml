@@ -1,0 +1,62 @@
+#
+# Start an UBUNTU environment.
+# I'm using the Awesome Compose exercises.
+# https://stackoverflow.com/questions/60260437/running-a-ubuntu-container-in-background-using-docker-compose
+#
+# There is no need to specify an entrypoint to keep the container alve
+# as it is done with CentOS79.
+#
+# Date: Mon 2023Jan16 21:28:48 PST -- initial environment
+#
+services:
+
+# #
+# # NETUTILS
+# #   
+#   netutils:
+#     image: nicolaka/netshoot
+#     hostname: netutils
+#     container_name: netutils
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"      
+#     command: ["sleep", "infinity"]
+
+#
+# PRIMARY - Ubuntu
+#  
+  ubuntu2204-1:
+    image: ubuntu:22.04
+    hostname: u21
+    container_name: u21
+    privileged: true
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+# #
+# # SECONDARY - Ubuntu
+# #  
+#   ubuntu2204-2:
+#     image: ubuntu:22.04
+#     hostname: u22
+#     container_name: u22
+#     privileged: true   
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"    
+#     command: ["sleep", "infinity"] 
+
+# #
+# # THIRD - Ubuntu
+# #  
+#   ubuntu2204-3:
+#     image: ubuntu:22.04
+#     hostname: u23
+#     container_name: u23
+#     privileged: true   
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"    
+#     command: ["sleep", "infinity"] 

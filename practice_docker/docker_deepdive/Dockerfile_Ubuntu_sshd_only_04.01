@@ -1,0 +1,5 @@
+#This is a custom ubuntu with ssh installed
+FROM ubuntu:xenial
+MAINTAINER devuser <devuser@localhost>
+RUN apt-get update -y
+RUN apt-get install telnet openssh-server -y

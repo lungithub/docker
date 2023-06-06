@@ -1,0 +1,259 @@
+#
+# I'm using the Awesome Compose exercises.
+# This one is to spin up several CentOS servers
+# A example of what can be done:
+#   - Postgresql PRIMRARY DB server
+#   - Postgresql SECONDRY DB server
+# I want to have the following
+#   - Grafana danshboard for resource monitoring
+#   - Prometheus to scrape system metrics
+#   - Netshoot as a general purpose container with utilities
+#
+# This mounts the parent dir where the compose file is found and makes it
+# available inside the container.
+# --->
+#  volumes:
+#    - "./:/hostdata"   
+# <---
+# In the container do 'cd /hostdata' to access files from the docker host.
+#
+# Sun 2022Dec04 18:35:39 PST -- add several centos containers
+# Mon 2023Jan16 17:18:03 PST -- add splunk container
+#
+version: "2.13.0"
+
+services:
+
+#
+# NETUTILS
+# Sun 2022Dec04 18:35:39 PST
+#  
+  netutils:
+    image: nicolaka/netshoot
+    hostname: netutils
+    container_name: netutils
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"
+      - "postgres_data:/postgres"            
+    command: ["sleep", "infinity"] 
+ 
+#
+# SPLUNK
+# Mon 2023Jan16 17:18:03 PST
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
+#
+  splunk:
+    image: splunk/splunk:latest
+    hostname: splunk
+    container_name: splunk
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_LICENSE_URI=Fee
+      - SPLUNK_PASSWORD=abc12345
+    ports:
+      - 8000:8000            
+    volumes:
+      - "./:/hostdata"
+
+#
+# PGADMIN
+# Mon 2023Jan16 17:18:03 PST
+#
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=devuser@localnet.net
+      - PGADMIN_DEFAULT_PASSWORD=abc12345
+    ports:
+      - "5050:80"
+    restart: always
+
+#
+# PRIMARY server
+# Sun 2022Dec04 18:35:39 PST
+# 
+  centos79-1:
+    image: centos:centos7.9.2009
+    hostname: centos79-1
+    container_name: c71
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+#
+# SECONDARY server
+# Sun 2022Dec04 18:35:39 PST
+#  
+  centos79-2:
+    image: centos:centos7.9.2009
+    hostname: centos79-2
+    container_name: c72
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD server
+# Sun 2022Dec04 18:35:39 PST
+#
+  centos79-3:
+    image: centos:centos7.9.2009
+    hostname: centos79-3
+    container_name: c73
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# PRIMARY - CentOS8
+#  
+  centos8-1:
+    image: centos:8.4.2105
+    hostname: centos8-1
+    container_name: c81
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+#
+# SECONDARY - CentOS8
+#  
+  centos8-2:
+    image: centos:8.4.2105
+    hostname: centos8-2
+    container_name: c82
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD - CentOS8
+#  
+  centos8-3:
+    image: centos:8.4.2105
+    hostname: centos8-3
+    container_name: c83
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+
+#
+# PRIMARY - Ubuntu
+#  
+  ubuntu2204-1:
+    image: ubuntu:22.04
+    hostname: ubuntu2204-1
+    container_name: u1
+    privileged: true
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+    # command: ["/usr/bin/systemd", "infinity"]       
+
+#
+# SECONDARY - Ubuntu
+#  
+  ubuntu2204-2:
+    image: ubuntu:22.04
+    hostname: ubuntu2204-2
+    container_name: u2
+    privileged: true   
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD - Ubuntu
+#  
+  ubuntu2204-3:
+    image: ubuntu:22.04
+    hostname: ubuntu2204-3
+    container_name: u3
+    privileged: true   
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# PROMETHEUS
+# Sun 2022Dec04 18:35:39 PST
+#   
+  prometheus:
+    image: prom/prometheus
+    hostname: prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - "./:/hostdata"  
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+#
+# GRAFANA
+# Sun 2022Dec04 18:35:39 PST
+#     
+  grafana:
+    image: grafana/grafana
+    hostname: grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - "./:/hostdata"      
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+#
+# PORTAINER
+# Sun 2022Dec04 18:35:39 PST
+#
+  portainer:
+    image: portainer/portainer-ce:alpine
+    hostname: portainer
+    container_name: portainer
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/app"
+    restart: always
+
+volumes:
+  # portainer
+  portainer_data:    
+  # p8s
+  prom_data:
+  # postgres
+  postgres_data:

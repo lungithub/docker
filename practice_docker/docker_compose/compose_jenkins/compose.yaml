@@ -1,0 +1,96 @@
+#
+# Spin up a DockerCompose env for Jenkins
+# https://www.cloudbees.com/blog/how-to-install-and-run-jenkins-with-docker-compose
+#
+# Jenkins Docs
+# https://www.jenkins.io/doc/
+#
+# Once the container is running, to get the initial Jenkins password do
+#   -> docker logs jenkins | less
+#
+# Login to the jenkins container
+#   -> docker exec -it jenkins bash
+# 
+# This creates all jenkins config
+#   - ./jenkins_configuration is on the mac in the same top dir where the compoose file is
+#   - /var/jenkins_home  is the jenkins homedir inside the container
+#   - /hostdata is inside the container showing all macos top dir where the compoose file is
+# --->
+#  volumes:
+#    - ./jenkins_configuration:/var/jenkins_home   
+#    - ./:/hostdata
+# <---
+#
+# In the container do 'cd /hostdata' to access files from the mactop, the docker host.
+#
+# Sat 2023Mar11 19:01:45 PST -- initial test deployment
+# 
+# version: "2.13.0" -- it works without specifying the version
+#
+
+services:
+
+#
+# NETUTILS
+# Sun 2022Dec04 18:35:39 PST
+#  
+  netutils:
+    image: nicolaka/netshoot
+    hostname: netutils
+    container_name: jenkins-netutils
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"         
+    command: ["sleep", "infinity"]
+
+#
+# JENKINS
+# 
+# Based on Ubuntu. Use APT commands.
+#
+  jenkins:
+    image: jenkins/jenkins:lts
+    hostname: jenkins
+    container_name: jenkins
+    restart: on-failure
+    privileged: true
+    user: root
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - ./jenkins_configuration:/var/jenkins_home
+      - "./:/hostdata"
+#
+# PRIMARY - Ubuntu
+#  
+  ubuntu2204-1:
+    image: ubuntu:22.04
+    hostname: ubuntu2204-1
+    container_name: jenkins-agent1
+    privileged: true
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+    # command: ["/usr/bin/systemd", "infinity"]       
+
+#
+# PORTAINER
+# Sun 2022Dec04 18:35:39 PST
+#
+  portainer:
+    image: portainer/portainer-ce:alpine
+    hostname: portainer
+    container_name: jenkins-portainer
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/app"
+    restart: always
+
+volumes:
+  # portainer
+  portainer_data:

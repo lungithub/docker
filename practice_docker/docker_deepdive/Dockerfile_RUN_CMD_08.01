@@ -1,0 +1,10 @@
+#Dockerfile based on the latest centos 7 image - non-provilegted user entry
+FROM centos:latest
+LABEL maintainer="devuser@example.com"
+
+# This runs as root and will be part of the container image
+RUN useradd -ms /bin/bash user1
+
+CMD "echo" "This is a custom container message from the devuser... Hello."
+
+USER user1

@@ -1,0 +1,11 @@
+FROM centos:6.6
+MAINTAINER devuser@localhost
+
+RUN useradd -ms /bin/bash user1
+RUN echo "From centos:6.6" >> /etc/afile_centos66.txt
+
+FROM centos:6.7
+RUN useradd -ms /bin/bash user2
+RUN echo "From centos:6.7" >> /etc/bfile_centos67.txt
+
+COPY --from=0 /etc/afile_centos66.txt /etc

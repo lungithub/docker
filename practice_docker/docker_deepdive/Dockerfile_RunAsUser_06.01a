@@ -1,0 +1,8 @@
+FROM centos:7.5.1804
+LABEL maintainer="devuser@example.com"
+
+RUN useradd -ms /bin/bash user1
+USER user1
+
+# this results in an error because it wants to write as user1 to a privileged location
+RUN echo "EXPORT 192.168.0.0/24" >> /etc/exports.list

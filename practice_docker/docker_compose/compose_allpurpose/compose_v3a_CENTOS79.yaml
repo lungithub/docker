@@ -1,0 +1,51 @@
+#
+# I'm using the Awesome Compose exercises.
+# This one is to sping up a PSQL server.
+# I want to have a Grafana danshboard for the DB.
+# Also I want to have system metrics.
+#
+# I added the Prometheus, Grafana and Netshoot containers.
+#
+# Sun 2022Dec04 18:35:39 PST
+#
+services:
+
+#
+# NETUTILS
+#   
+  netutils:
+    image: nicolaka/netshoot
+    hostname: netutils
+    container_name: netutils
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+
+#
+# PRIMARY 
+#  
+  centos79-1:
+    image: centos:centos7.9.2009
+    hostname: master01
+    container_name: c1
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+#
+# SECONDARY
+#  
+  centos79-2:
+    image: centos:centos7.9.2009
+    hostname: slave01
+    container_name: c2
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
