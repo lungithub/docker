@@ -1,11 +1,13 @@
 #
+# DevESP teaching environment.
+#
 # In this config all containers can talk to each other on the given networks.
 # But the ip address given in one network can be on the same range as the one
 # given on another netwrok. I want all to be different VLANS.
 #
 # https://stackoverflow.com/questions/72216583/docker-compose-networking-priority-property-ignored
 #
-# Fri 2023Jun02 22:18:26 PDT
+# Created: Sat 2023Jun10 16:53:59 PDT
 #
 # version: "2.13.0"
 
@@ -19,55 +21,33 @@ services:
     networks:
       net1:
         priority: 10
-        ipv4_address: "172.24.1.4"
+        ipv4_address: "172.44.4.4"
       net2:
         priority: 0
       net3:
         priority: 0
     hostname: netutils
-    container_name: netutils2
+    container_name: netutils-devesp
     restart: on-failure
     volumes:
       - "./:/hostdata"         
     command: ["sleep", "infinity"]
 
 #
-# WITNESS - CentOS8
+# CentOS8 - FIRST
 #  
-  witness:
+  centos1:
     image: centos:8.4.2105
     networks:
       net1:
         priority: 10
-        ipv4_address: "172.24.1.3"
+        ipv4_address: "172.44.4.2"
       net2:
         priority: 0
       net3:
         priority: 0
-    hostname: witness
-    container_name: witness
-    privileged: true
-    entrypoint: ["/usr/sbin/init"]
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]  
-
-#
-# FIRST - CentOS8
-#  
-  pgnode1:
-    image: centos:8.4.2105
-    networks:
-      net1:
-        priority: 10
-        ipv4_address: "172.24.1.2"
-      net2:
-        priority: 0
-      net3:
-        priority: 0
-    hostname: pgnode1
-    container_name: pgnode1
+    hostname: centos1
+    container_name: centos1-devesp
     privileged: true
     entrypoint: ["/usr/sbin/init"]
     restart: on-failure
@@ -75,20 +55,20 @@ services:
       - "./:/hostdata"      
     command: ["sleep", "infinity"]      
 #
-# SECOND - CentOS8
+# CentOS8 - SECOND
 #  
-  pgnode2:
+  centos2:
     image: centos:8.4.2105
     networks:
       net1:
-        priority: 0
+        priority: 10
+        ipv4_address: "172.44.4.3"
       net2:
-        priority: 20
-        ipv4_address: "172.25.1.2"            
+        priority: 0
       net3:
         priority: 0
-    hostname: pgnode2
-    container_name: pgnode2
+    hostname: centos2
+    container_name: centos2-devesp
     privileged: true
     entrypoint: ["/usr/sbin/init"]    
     restart: on-failure
@@ -97,10 +77,52 @@ services:
     command: ["sleep", "infinity"] 
 
 #
-# THIRD - CentOS8
+# U22 - FIRST
 #  
-  pgnode3:
-    image: centos:8.4.2105
+  ubuntu1:
+    image: ubuntu:22.04
+    networks:   
+      net1:
+        priority: 0   
+      net2:
+        priority: 30
+        ipv4_address: "172.45.4.3"           
+      net3:
+        priority: 0          
+    hostname: ubuntu1
+    container_name: ubuntu1-devesp
+    privileged: true 
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# U22 - SECOND
+#  
+  ubuntu2:
+    image: ubuntu:22.04
+    networks:   
+      net1:
+        priority: 0   
+      net2:
+        priority: 30
+        ipv4_address: "172.45.4.4"           
+      net3:
+        priority: 0   
+    hostname: ubuntu2
+    container_name: ubuntu2-devesp
+    privileged: true 
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"]
+
+#
+# debian - THIRD
+#  
+  debian1:
+    image: debian:stable-slim
     networks:   
       net1:
         priority: 0
@@ -108,32 +130,31 @@ services:
         priority: 0        
       net3:
         priority: 30
-        ipv4_address: "172.26.1.2"           
-    hostname: pgnode3
-    container_name: pgnode3
-    privileged: true
-    entrypoint: ["/usr/sbin/init"]    
+        ipv4_address: "172.46.4.2"           
+    hostname: debian1
+    container_name: debian1-devesp
+    privileged: true 
     restart: on-failure
     volumes:
       - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+    command: ["sleep", "infinity"]
 
 networks:
   net1:
     ipam: 
       driver: default
       config:
-        - subnet: "172.24.0.0/16"
-          ip_range: "172.24.1.0/16"
+        - subnet: "172.44.0.0/16"
+          ip_range: "172.44.4.0/16"
   net2:
     ipam: 
       driver: default
       config:
-        - subnet: "172.25.0.0/16"
-          ip_range: "172.25.1.0/16"
+        - subnet: "172.45.0.0/16"
+          ip_range: "172.45.4.0/16"
   net3:
     ipam: 
       driver: default
       config:
-        - subnet: "172.26.0.0/16" 
-          ip_range: "172.26.1.0/16"
+        - subnet: "172.46.0.0/16" 
+          ip_range: "172.46.4.0/16"
