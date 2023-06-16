@@ -48,7 +48,7 @@ Mactop.
 Go to the parent dir of the docker compose file.
 Point the compose.yaml link to the file version to use.
 ```
-cd ~/Documents/DATAM1/MyCode/DOCKER/practice_docker/docker_compose/compose_psql-replication
+cd ~/Documents/DATAM1/MyCode/DOCKER/practice_docker/docker_compose/compose_allpurpose/
 
 ```
 
@@ -60,6 +60,10 @@ Start the environment
 Check the containers are running
 ```
 -> docker ps
+
+-> docker compose ls
+
+-> docker compose config
 ```
 
 Login to a container
