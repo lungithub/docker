@@ -48,7 +48,7 @@ Mactop.
 Go to the parent dir of the docker compose file.
 Point the compose.yaml link to the file version to use.
 ```
-cd ~/Documents/DATAM1/MyCode/DOCKER/practice_docker/docker_compose/compose_allpurpose/
+cd ~/Documents/DATAM1/MyCode/DOCKER/practice_docker/docker_compose/compose_psql-replication
 
 ```
 
@@ -60,10 +60,6 @@ Start the environment
 Check the containers are running
 ```
 -> docker ps
-
--> docker compose ls
-
--> docker compose config
 ```
 
 Login to a container
@@ -122,13 +118,13 @@ Sat 2023Jan14 13:42:59 PST
 
 # Run the PSQL installation script as root
 - install psql packages
-- create postgres user system account
+- create `postgres` user system account
 - configure the postgres user with SUDO
 - create link to /db/pg${VERSION}
 - create log directory
 - copy files to manage the service
 ```
-root# /hostdata/app/psql_config/install_psql.sh
+/hostdata/app/psql/install/psql_install.sh
 ```
 
 # Check postgres user environment
@@ -190,7 +186,11 @@ Sat 2023Jan14 20:48:55 UTC
 
 Go to the directory containing the installation scripts.
 ```
-cd /hostdata/app/psql_config
+Fri 2023Jun16 18:07:53 PDT
+hist:13 -> ll
+total 0
+drwxr-xr-x 20 root root 640 Jun 16 15:55 initial_sys_config/
+drwxr-xr-x  6 root root 192 Jun 16 16:15 psql
 ```
 
 What do i have in there?
@@ -198,40 +198,51 @@ What do i have in there?
 - A script to install Postgresql v13: `install_psql.sh`
 - A directory name `files` with config files for the package installations.
 ```
-Sat 2023Jan14 20:25:42 UTC
-root@server01
-/hostdata/app/psql_config
-hist:15 -> ll
-total 20
--rwxr-xr-x  1 root root  817 Jun  8 21:47 copy_psql_management_files.sh
--rwxr-xr-x  1 root root  911 Jun  8 21:46 copy_sudo.sh
-drwxr-xr-x 15 root root  480 Jun  8 21:23 files
--rwxr-xr-x  1 root root  587 Jun  8 21:23 install_centos_packages.sh
--rwxr-xr-x  1 root root  227 Jun  8 21:46 install_environment.sh
--rwxr-xr-x  1 root root 1898 Jun  8 21:23 install_psql.sh
--rw-------  1 root root  205 Jun  8 21:23 logfile
--rwxr-xr-x  1 root root  613 Jun  8 21:23 replication_check_primary_v1.sh
--rwxr-xr-x  1 root root  362 Jun  8 21:23 replication_check_standby_v1.sh
+-> ll /hostdata/app/initial_sys_config/
+total 0
+drwxr-xr-x  5 root root 160 Jun 16 15:32 adduser/
+drwxr-xr-x  6 root root 192 Jun 16 15:32 ansible_install/
+drwxr-xr-x  3 root root  96 Jun 16 15:32 docker_install/
+drwxr-xr-x 10 root root 320 Jun 16 15:32 environment_config/
+drwxr-xr-x 11 root root 352 Jun 16 15:38 generic_install/
+drwxr-xr-x  4 root root 128 Jun 16 15:32 helper_scripts/
+drwxr-xr-x 18 root root 576 Jun 16 15:32 java_install/
+drwxr-xr-x  5 root root 160 Jun 16 15:32 jenkins_install/
+drwxr-xr-x  8 root root 256 Jun 16 15:32 k8s_install/
+drwxr-xr-x  3 root root  96 Jun 16 15:32 misc_install/
+drwxr-xr-x  4 root root 128 Jun 16 15:32 nginx_install/
+drwxr-xr-x  9 root root 288 Jun 16 15:32 ntp_install/
+drwxr-xr-x  3 root root  96 Jun 16 15:32 perl_install/
+drwxr-xr-x  6 root root 192 Jun 16 15:32 python_install/
+drwxr-xr-x  3 root root  96 Jun 16 15:32 ruby_install/
 
+hist:15 -> ll /hostdata/app/psql
+total 4
+-rw-r--r--  1 root root  14 Jun 16 16:15 README.md
+drwxr-xr-x 15 root root 480 Jun 16 16:15 files/
+drwxr-xr-x  7 root root 224 Jun 16 16:15 install/
 
-Sat 2023Jan14 20:25:43 UTC
-root@server01
-/hostdata/app/psql_config
-hist:15 -> ll files/
-total 68
--rw-r--r-- 1 root root   389 Jun  8 21:23 etc_group
--rw-r--r-- 1 root root  4374 Jun  8 21:23 etc_sudoers
--rw-r--r-- 1 root root   353 Jun  8 21:23 master_postgresql.auto.conf
--rw-r--r-- 1 root root   866 Jun  8 21:23 master_postgresql.conf
--rw------- 1 root root  4760 Jun  8 21:23 pg_hba.conf_ORIG
--rw-r--r-- 1 root root   832 Jun  8 21:23 pg_hba_ALL.conf
--rw------- 1 root root    88 Jun  8 21:23 postgresql.auto.conf_ORIG
--rw------- 1 root root 28031 Jun  8 21:23 postgresql.conf_ORIG
--rw-r--r-- 1 root root   111 Jun  8 21:23 psreload.sh
--rw-r--r-- 1 root root   109 Jun  8 21:23 pstart.sh
--rw-r--r-- 1 root root   111 Jun  8 21:23 pstatus.sh
--rw-r--r-- 1 root root   107 Jun  8 21:23 pstop.sh
--rw-r--r-- 1 root root   586 Jun  8 21:23 slave_postgresql.conf
+-> ll /hostdata/app/psql/files/
+-rw-r--r-- 1 root root   389 Jun 16 16:15 etc_group
+-rw-r--r-- 1 root root  4374 Jun 16 16:15 etc_sudoers
+-rw-r--r-- 1 root root   353 Jun 16 16:15 master_postgresql.auto.conf
+-rw-r--r-- 1 root root   866 Jun 16 16:15 master_postgresql.conf
+-rw-r--r-- 1 root root  4760 Jun 16 16:15 pg_hba.conf_ORIG
+-rw-r--r-- 1 root root   832 Jun 16 16:15 pg_hba_ALL.conf
+-rw-r--r-- 1 root root    88 Jun 16 16:15 postgresql.auto.conf_ORIG
+-rw-r--r-- 1 root root 28031 Jun 16 16:15 postgresql.conf_ORIG
+-rw-r--r-- 1 root root   111 Jun 16 16:15 psreload.sh
+-rw-r--r-- 1 root root   109 Jun 16 16:15 pstart.sh
+-rw-r--r-- 1 root root   111 Jun 16 16:15 pstatus.sh
+-rw-r--r-- 1 root root   107 Jun 16 16:15 pstop.sh
+-rw-r--r-- 1 root root   586 Jun 16 16:15 slave_postgresql.conf
+
+-> ll /hostdata/app/psql/install/
+-rwxr-xr-x 1 root root  817 Jun 16 16:15 psql_copy_management_files.sh*
+-rwxr-xr-x 1 root root  646 Jun 16 16:15 psql_copy_sudo.sh*
+-rwxr-xr-x 1 root root 2199 Jun 16 16:22 psql_install.sh*
+-rwxr-xr-x 1 root root  613 Jun 16 16:15 replication_check_primary_v1.sh*
+-rwxr-xr-x 1 root root  362 Jun 16 16:15 replication_check_standby_v1.sh*
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
