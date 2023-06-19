@@ -154,6 +154,27 @@ services:
     volumes:
       - "./:/hostdata"
       
+#
+# CLIENT - CentOS8
+#  
+  client1:
+    image: centos:8.4.2105
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.27.1.11"
+      net2:
+        priority: 0
+      net3:
+        priority: 0
+    hostname: client1
+    container_name: client1
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"] 
 
 #
 # WITNESS - CentOS8
