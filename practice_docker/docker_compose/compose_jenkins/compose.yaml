@@ -4,7 +4,7 @@
 #
 # Jenkins Docs
 # https://www.jenkins.io/doc/
-#
+# 
 # Once the container is running, to get the initial Jenkins password do
 #   -> docker logs jenkins | less
 #
@@ -12,7 +12,7 @@
 #   -> docker exec -it jenkins bash
 # 
 # This creates all jenkins config
-#   - ./jenkins_configuration is on the mac in the same top dir where the compoose file is
+#   - ./jenkins_configuration is on the mac in the same top dir where the compose file is
 #   - /var/jenkins_home  is the jenkins homedir inside the container
 #   - /hostdata is inside the container showing all macos top dir where the compoose file is
 # --->
@@ -50,6 +50,10 @@ services:
 #
   jenkins:
     image: jenkins/jenkins:lts
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.2"       
     hostname: jenkins
     container_name: jenkins
     restart: on-failure
@@ -64,10 +68,14 @@ services:
 #
 # PRIMARY - Ubuntu
 #  
-  ubuntu2204-1:
+  jenkins-agent-ubuntu1:
     image: ubuntu:22.04
-    hostname: ubuntu2204-1
-    container_name: jenkins-agent1
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.3"      
+    hostname: jenkins-agent-ubuntu1
+    container_name: jenkins-agent-ubuntu1
     privileged: true
     restart: on-failure
     volumes:
@@ -75,22 +83,25 @@ services:
     command: ["sleep", "infinity"]
     # command: ["/usr/bin/systemd", "infinity"]       
 
-#
-# PORTAINER
-# Sun 2022Dec04 18:35:39 PST
-#
-  portainer:
-    image: portainer/portainer-ce:alpine
-    hostname: portainer
-    container_name: jenkins-portainer
-    command: -H unix:///var/run/docker.sock
-    ports:
-      - "9000:9000"
+  jenkins-agent-centos1:
+    image: centos:8.4.2105
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.4" 
+    hostname: jenkins-agent-centos1
+    container_name: jenkins-agent-centos1
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "portainer_data:/app"
-    restart: always
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
 
-volumes:
-  # portainer
-  portainer_data:
+networks:
+  net-jenkins:
+    ipam: 
+      driver: default
+      config:
+        - subnet: "172.30.0.0/16"
+          ip_range: "172.30.1.0/16"
