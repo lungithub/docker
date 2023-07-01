@@ -21,7 +21,7 @@ services:
     networks:
       net1:
         priority: 10
-        ipv4_address: "172.44.4.10"
+        ipv4_address: "172.44.4.4"
       net2:
         priority: 0
       net3:
@@ -34,11 +34,10 @@ services:
     command: ["sleep", "infinity"]
 
 #
-# RedHat9 - FIRST
-# Provides SystemD functionallity
-#   
-  rhel9-1:
-    image: registry.access.redhat.com/ubi9/ubi-init
+# CentOS8 - FIRST
+#  
+  centos1:
+    image: centos:8.4.2105
     networks:
       net1:
         priority: 10
@@ -47,8 +46,8 @@ services:
         priority: 0
       net3:
         priority: 0
-    hostname: rhel9-1
-    container_name: rhel9-1-devesp
+    hostname: centos1
+    container_name: centos1-devesp
     privileged: true
     entrypoint: ["/usr/sbin/init"]
     restart: on-failure
@@ -56,10 +55,10 @@ services:
       - "./:/hostdata"      
     command: ["sleep", "infinity"]      
 #
-# RedHat9 - SECOND
+# CentOS8 - SECOND
 #  
-  rhel9-2:
-    image: registry.access.redhat.com/ubi9/ubi-init
+  centos2:
+    image: centos:8.4.2105
     networks:
       net1:
         priority: 10
@@ -68,30 +67,8 @@ services:
         priority: 0
       net3:
         priority: 0
-    hostname: rhel9-2
-    container_name: rhel9-2-devesp
-    privileged: true
-    entrypoint: ["/usr/sbin/init"]    
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
-
-#
-# RedHat9 - THIRD
-#  
-  rhel9-3:
-    image: registry.access.redhat.com/ubi9/ubi-init
-    networks:
-      net1:
-        priority: 10
-        ipv4_address: "172.44.4.4"
-      net2:
-        priority: 0
-      net3:
-        priority: 0
-    hostname: rhel9-3
-    container_name: rhel9-3-devesp
+    hostname: centos2
+    container_name: centos2-devesp
     privileged: true
     entrypoint: ["/usr/sbin/init"]    
     restart: on-failure
@@ -102,7 +79,7 @@ services:
 #
 # U22 - FIRST
 #  
-  ubuntu2204-1:
+  ubuntu1:
     image: ubuntu:22.04
     networks:   
       net1:
@@ -112,8 +89,8 @@ services:
         ipv4_address: "172.45.4.3"           
       net3:
         priority: 0          
-    hostname: ubuntu2204-1
-    container_name: ubuntu2204-1-devesp
+    hostname: ubuntu1
+    container_name: ubuntu1-devesp
     privileged: true 
     restart: on-failure
     volumes:
@@ -123,7 +100,7 @@ services:
 #
 # U22 - SECOND
 #  
-  ubuntu2204-2:
+  ubuntu2:
     image: ubuntu:22.04
     networks:   
       net1:
@@ -133,8 +110,8 @@ services:
         ipv4_address: "172.45.4.4"           
       net3:
         priority: 0   
-    hostname: ubuntu2204-2
-    container_name: ubuntu2204-2-devesp
+    hostname: ubuntu2
+    container_name: ubuntu2-devesp
     privileged: true 
     restart: on-failure
     volumes:
@@ -142,50 +119,7 @@ services:
     command: ["sleep", "infinity"]
 
 #
-# U22 - SECOND
-#  
-  ubuntu2204-3:
-    image: ubuntu:22.04
-    networks:   
-      net1:
-        priority: 0   
-      net2:
-        priority: 30
-        ipv4_address: "172.45.4.5"           
-      net3:
-        priority: 0   
-    hostname: ubuntu2204-3
-    container_name: ubuntu2204-3-devesp
-    privileged: true 
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"]
-
-#
-# CentOS8 - FIRST
-#  
-  centos8-1:
-    image: centos:8.4.2105
-    networks:   
-      net1:
-        priority: 0
-      net2:
-        priority: 0        
-      net3:
-        priority: 30
-        ipv4_address: "172.46.4.2"      
-    hostname: centos8-1
-    container_name: centos8-1-devesp
-    privileged: true
-    entrypoint: ["/usr/sbin/init"]
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]      
-
-#
-# debian - FIRST
+# debian - THIRD
 #  
   debian1:
     image: debian:stable-slim
@@ -196,7 +130,7 @@ services:
         priority: 0        
       net3:
         priority: 30
-        ipv4_address: "172.46.4.3"           
+        ipv4_address: "172.46.4.2"           
     hostname: debian1
     container_name: debian1-devesp
     privileged: true 
