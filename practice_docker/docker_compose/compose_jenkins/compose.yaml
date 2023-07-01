@@ -23,6 +23,8 @@
 #
 # In the container do 'cd /hostdata' to access files from the mactop, the docker host.
 #
+# CHANGE THE ADMIN PASSWORD as soon as you login for the first time.
+#
 # Sat 2023Mar11 19:01:45 PST -- initial test deployment
 # 
 # version: "2.13.0" -- it works without specifying the version

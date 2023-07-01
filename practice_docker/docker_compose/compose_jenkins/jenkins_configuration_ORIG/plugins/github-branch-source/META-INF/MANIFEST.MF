@@ -1,0 +1,30 @@
+Manifest-Version: 1.0
+Created-By: Maven Archiver 3.6.0
+Build-Jdk-Spec: 11
+Specification-Title: GitHub Branch Source Plugin
+Specification-Version: 0.0
+Implementation-Title: GitHub Branch Source Plugin
+Implementation-Version: 1728.v859147241f49
+Group-Id: org.jenkins-ci.plugins
+Artifact-Id: github-branch-source
+Short-Name: github-branch-source
+Long-Name: GitHub Branch Source Plugin
+Url: https://github.com/jenkinsci/github-branch-source-plugin
+Compatible-Since-Version: 2.2.0
+Plugin-Version: 1728.v859147241f49
+Hudson-Version: 2.361.4
+Jenkins-Version: 2.361.4
+Plugin-Dependencies: github:1.37.0,caffeine-api:2.9.3-65.v6a_47d0f4d1fe,
+ jjwt-api:0.11.5-77.v646c772fddb_0,okhttp-api:4.10.0-136.v1d8ce1b_1db_72
+ ,workflow-support:839.v35e2736cfd5c,credentials:1189.vf61b_a_5e2f62e,gi
+ thub-api:1.303-417.ve35d9dd78549
+Plugin-Developers: 
+Plugin-License-Name: MIT
+Plugin-License-Url: https://opensource.org/licenses/MIT
+Plugin-ScmConnection: scm:git:https://github.com/jenkinsci/github-branch
+ -source-plugin.git
+Plugin-ScmTag: 859147241f49c10789ad0f840a757e33827ba667
+Plugin-ScmUrl: https://github.com/jenkinsci/github-branch-source-plugin
+Plugin-GitHash: 859147241f49c10789ad0f840a757e33827ba667
+Implementation-Build: 859147241f49c10789ad0f840a757e33827ba667
+
