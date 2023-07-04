@@ -25,6 +25,11 @@ none
 -------------------------------------------------------------------------------
 [-] Revision History
 
+
+Date: Sat 2023Jul01 13:54:54 PDT
+Author: foot
+Reason for change: added scripts for RHEL9
+
 Date: Mon 2023Jan16 13:01:00 PST
 Author: foot
 Reason for change: refined the scripts to automate the provisioning process
@@ -47,13 +52,12 @@ CentOS 8.
 =COMPOSE :: create and start environment
 ---
 
-# Create Containers
+# Create the environment
 
 Go to the parent dir of the docker compose file.
 Point the compose.yaml link to the file version to use.
 ```
 cd ~/Documents/DATAM1/MyCode/DOCKER/practice_docker/docker_compose/compose_allpurpose/
-
 ```
 
 Start the environment
@@ -75,9 +79,44 @@ Login to a container
 -> docker exec -it c1 bash
 ```
 
+## Stop start the entire environment
+
+Stop the entire environment
+```
+-> docker compose stop
+```
+Start the entire environment
+```
+-> docker compose start
+```
+
+## Stop start one container
+
+Stop a container
+```
+-> docker compose stop rhel9-1-devesp
+```
+
+Start a container
+```
+ -> docker compose start rhel9-1-devesp
+```
+
 Check the shared `/hostdata` host path is mounted
 ```
 [root@server01 /]# df -h /hostdata
+```
+
+# Destroy the environment
+
+> This action means you will have to recreate and reconfigure the entire environment from scratch.
+
+Wipe the entire environment
+- network
+- volumes
+- containers
+```
+-> docker compose down -v
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -109,54 +148,58 @@ The installation scripts are in this directory:
 > /hostdata/data/env_config/psql_config
 See `APPENDIX A :: psql :: what do I have in there?`
 
-# Install CentOS packages
+# Install packages
 
 Tasks:
 - installs all centos packages
 - copies customized /etc/sudoers and /etc/group file
 - sets the timezone to PST
 ```
+/hostdata/app/initial_sys_config/generic_install/install_generic_packages_U2204.sh
+
+/hostdata/app/initial_sys_config/generic_install/install_generic_packages_RHEL9_v1.sh
+
 /hostdata/app/initial_sys_config/generic_install/install_generic_packages_CentOS8_v2.sh
+
+/hostdata/app/initial_sys_config/generic_install/install_generic_packages_CentOS7.sh
 ```
 
 ## Install NTP
 ```
+/hostdata/app/initial_sys_config/ntp_install/install_ntp_Ubuntu_U2004.sh
+
+/hostdata/app/initial_sys_config/ntp_install/install_ntp_rhel9.sh
+
 /hostdata/app/initial_sys_config/ntp_install/install_ntp_CentOS8.sh
+
+/hostdata/app/initial_sys_config/ntp_install/install_ntp_CentOS7.sh
 ```
 
-## Add user
+## Copy auxiliary files
 ```
-/hostdata/app/initial_sys_config/adduser/adduser_centos.sh
-```
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=COMPOSE :: stop the docker compose environment
----
-
-Sat 2023Jan14 14:33:07 PST
-
-# Stop the environment
-
-You can pause the entire environment and restart at a later time.
-
-Stop the containers with
-```
--> docker compose stop
+cd /hostdata/app/initial_sys_config/environment_config/copy_files/;
+./copy_files.sh;
+echo
 ```
 
-This works also.
-``` 
-$ docker compose down
+## Add User
+```
+/hostdata/app/initial_sys_config/adduser/adduser_rhel_centos.sh
+
+/hostdata/app/initial_sys_config/adduser/adduser_ubuntu.sh
 ```
 
-Stop the env and delete everything including volumes and networsk.
-```
-$ docker compose down -v
-```
+## Configure User
 
-# Restart the environment
+Add env settings.
 ```
--> docker compose start
+cd /hostdata/app/initial_sys_config/environment_config;
+./env_setup.sh;
+echo
+```
+Create the SSH dir and key.
+```
+/hostdata/app/initial_sys_config/adduser/create_user_ssh_dir_key.sh
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
