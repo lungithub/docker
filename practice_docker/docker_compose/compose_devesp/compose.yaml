@@ -9,6 +9,7 @@
 #
 # Created: Sat 2023Jun10 16:53:59 PDT
 # Update: Mon 2023Jul03 16:52:31 PDT -- add complete list of utility segment
+# Update: Sat 2023Jul15 15:16:12 PDT -- use custom RHEL9 and U2204 DevEsp images.
 #
 # version: "2.13.0"
 
@@ -171,7 +172,7 @@ services:
 # Provides SystemD functionallity
 #   
   rhel9-1-devesp:
-    image: registry.access.redhat.com/ubi9/ubi-init
+    image: dockio/rhel9-devesp:1.0
     networks:
       net1:
         priority: 10
@@ -192,7 +193,7 @@ services:
 # RedHat9 - SECOND
 #  
   rhel9-2-devesp:
-    image: registry.access.redhat.com/ubi9/ubi-init
+    image: dockio/rhel9-devesp:1.0
     networks:
       net1:
         priority: 10
@@ -214,7 +215,7 @@ services:
 # RedHat9 - THIRD
 #  
   rhel9-3-devesp:
-    image: registry.access.redhat.com/ubi9/ubi-init
+    image: dockio/rhel9-devesp:1.0
     networks:
       net1:
         priority: 10
@@ -239,7 +240,7 @@ services:
 # U22 - FIRST
 #  
   ubuntu2204-1-devesp:
-    image: ubuntu:22.04
+    image: dockio/u2204-devesp:1.0
     networks:   
       net1:
         priority: 0   
@@ -251,6 +252,7 @@ services:
     hostname: ubuntu2204-1-devesp
     container_name: ubuntu2204-1-devesp
     privileged: true 
+    entrypoint: ["/usr/sbin/init"]    
     restart: on-failure
     volumes:
       - "./:/hostdata"    
@@ -260,7 +262,7 @@ services:
 # U22 - SECOND
 #  
   ubuntu2204-2-devesp:
-    image: ubuntu:22.04
+    image: dockio/u2204-devesp:1.0
     networks:   
       net1:
         priority: 0   
@@ -270,6 +272,7 @@ services:
       net3:
         priority: 0   
     hostname: ubuntu2204-2-devesp
+    entrypoint: ["/usr/sbin/init"]    
     container_name: ubuntu2204-2-devesp
     privileged: true 
     restart: on-failure
@@ -281,7 +284,7 @@ services:
 # U22 - THIRD
 #  
   ubuntu2204-3-devesp:
-    image: ubuntu:22.04
+    image: dockio/u2204-devesp:1.0
     networks:   
       net1:
         priority: 0   
@@ -291,6 +294,7 @@ services:
       net3:
         priority: 0   
     hostname: ubuntu2204-3-devesp
+    entrypoint: ["/usr/sbin/init"]    
     container_name: ubuntu2204-3-devesp
     privileged: true 
     restart: on-failure
