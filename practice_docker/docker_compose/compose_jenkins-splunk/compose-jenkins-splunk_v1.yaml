@@ -1,0 +1,244 @@
+#
+# Spin up a DockerCompose env for Jenkins
+# https://www.cloudbees.com/blog/how-to-install-and-run-jenkins-with-docker-compose
+#
+# Jenkins Docs
+# https://www.jenkins.io/doc/
+# 
+# Once the container is running, to get the initial Jenkins password do
+#   -> docker logs jenkins | less
+#
+# Login to the jenkins container
+#   -> docker exec -it jenkins bash
+# 
+# This creates all jenkins config
+#   - ./jenkins_configuration is on the mac in the same top dir where the compose file is
+#   - /var/jenkins_home  is the jenkins homedir inside the container
+#   - /hostdata is inside the container showing all macos top dir where the compoose file is
+# --->
+#  volumes:
+#    - ./jenkins_configuration:/var/jenkins_home   
+#    - ./:/hostdata
+# <---
+#
+# In the container do 'cd /hostdata' to access files from the mactop, the docker host.
+#
+# :: JENKINS
+#   CHANGE THE ADMIN PASSWORD as soon as you login for the first time.
+#     user: admin
+#     pass: aaaaaa
+#
+# :: SPLUNK
+#     user:
+#     pass:
+#
+# Mon 2023Aug21 18:22:39 PDT -- initial test deployment
+# 
+# version: "2.13.0" -- it works without specifying the version
+#
+
+services:
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           JENKINS           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# JENKINS
+# 
+# Based on Ubuntu. Use APT commands.
+#
+  jenkins-cicd:
+    image: jenkins/jenkins:lts
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.2"       
+    hostname: jenkins-cicd
+    container_name: jenkins-cicd
+    restart: on-failure
+    privileged: true
+    user: root
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - ./jenkins_configuration:/var/jenkins_home
+      - "./:/hostdata"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           SPLUNK           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# SPLUNK
+# Mon 2023Jan16 17:18:03 PST
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
+#
+  splunk-cicd:
+    image: splunk/splunk:latest
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.3"  
+    hostname: splunk-cicd
+    container_name: splunk-cicd
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_LICENSE_URI=Fee
+      - SPLUNK_PASSWORD=abc12345
+    ports:
+      - 8000:8000            
+    volumes:
+      - "./:/hostdata"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           UBUNTU           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# AGENT: ubuntu
+#  
+  jenkins-agent-ubuntu-1:
+    image: dockio/u2204-devesp:1.0
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.4"      
+    hostname: jenkins-agent-ubuntu-1
+    container_name: jenkins-agent-ubuntu-1
+    privileged: true
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+    # command: ["/usr/bin/systemd", "infinity"]       
+
+#
+# AGENT: ubuntu
+# 
+  jenkins-agent-ubuntu-2:
+    image: dockio/u2204-devesp:1.0
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.5"      
+    hostname: jenkins-agent-ubuntu-2
+    container_name: jenkins-agent-ubuntu-2
+    privileged: true
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]
+    # command: ["/usr/bin/systemd", "infinity"]       
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           RHEL           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# AGENT: rhel
+# 
+  jenkins-agent-rhel9-1:
+    image: dockio/rhel9-devesp:1.0
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.6" 
+    hostname: jenkins-agent-rhel9-1
+    container_name: jenkins-agent-rhel9-1
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# AGENT: rhel
+# 
+  jenkins-agent-rhel9-2:
+    image: dockio/rhel9-devesp:1.0
+    networks:
+      net-jenkins:
+        priority: 10
+        ipv4_address: "172.30.1.7" 
+    hostname: jenkins-agent-rhel9-2
+    container_name: jenkins-agent-rhel9-2
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#############           P8s / GRAFANA / PORTAINER       #######################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#
+# PROMETHEUS
+# Sun 2022Dec04 18:35:39 PST
+#   
+  prometheus-cicd:
+    image: prom/prometheus
+    hostname: prometheus-cicd
+    container_name: prometheus-cicd
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - "./:/hostdata"  
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+#
+# GRAFANA
+# Sun 2022Dec04 18:35:39 PST
+#     
+  grafana-cicd:
+    image: grafana/grafana
+    hostname: grafana-cicd
+    container_name: grafana-cicd
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - "./:/hostdata"      
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+#
+# PORTAINER
+# Sun 2022Dec04 18:35:39 PST
+#
+  portainer-cicd:
+    image: portainer/portainer-ce:alpine
+    hostname: portainer-cicd
+    container_name: portainer-cicd
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/app"
+    restart: always
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           NETWORK           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+networks:
+  net-jenkins:
+    ipam: 
+      driver: default
+      config:
+        - subnet: "172.30.0.0/16"
+          ip_range: "172.30.1.0/16"
+
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+###################           VOLUMES           ###############################
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+volumes:
+  # portainer
+  portainer_data:    
+  # p8s
+  prom_data:

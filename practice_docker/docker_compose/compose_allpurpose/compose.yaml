@@ -16,10 +16,10 @@ services:
 # Manage services: 
 #    systemctl status ssh
 #  
-  rhel9test:
+  rhel9test-allpurpose:
     image: dockio/rhel9-devesp:1.0
-    hostname: rhel9test
-    container_name: rhel9test
+    hostname: rhel9test-allpurpose
+    container_name: rhel9test-allpurpose
     privileged: true
     entrypoint: ["/usr/sbin/init"]    
     restart: on-failure
@@ -34,10 +34,10 @@ services:
 #     service ssh status
 #     systemctl status ssh
 #     
-  ubuntu2204-devesp:
+  ubuntu2204-allpurpose:
     image: dockio/u2204-devesp:1.0       
-    hostname: ubuntu2204-devesp
-    container_name: ubuntu2204-devesp
+    hostname: ubuntu2204-allpurpose
+    container_name: ubuntu2204-allpurpose
     privileged: true 
     entrypoint: ["/usr/sbin/init"]     
     restart: on-failure

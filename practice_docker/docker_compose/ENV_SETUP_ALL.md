@@ -1,6 +1,6 @@
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-Subject ...: crete docker compose environment
+Subject ...: create docker compose environment
 Author ....: afoot
 
 [-] DESCRIPTION
@@ -90,16 +90,38 @@ Start the entire environment
 -> docker compose start
 ```
 
-## Stop start one container
+## Stop and Start one container
+
+This just stop and restarts an active container.
+
+List the containers
+```
+-> docker compose ls
+```
 
 Stop a container
 ```
--> docker compose stop rhel9-1-devesp
+-> docker compose stop rhel9-1-devesp 
 ```
 
 Start a container
 ```
- -> docker compose start rhel9-1-devesp
+-> docker compose start rhel9-1-devesp
+```
+
+## Destroy and Recreate one container
+
+This destroys the container entirely and recreates it.
+
+Stop a container
+```
+-> docker compose down rhel9-1-devesp
+```
+
+Start a container
+NOTE: do it in the background
+```
+ -> docker compose up rhel9-1-devesp &
 ```
 
 Check the shared `/hostdata` host path is mounted
