@@ -10,23 +10,23 @@
 #
 services:
 
-#
-# NETUTILS
-#   
-  netutils:
-    image: nicolaka/netshoot
-    hostname: netutils
-    container_name: netutils
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]
+# #
+# # NETUTILS
+# #   
+#   netutils:
+#     image: nicolaka/netshoot
+#     hostname: netutils
+#     container_name: netutils
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"      
+#     command: ["sleep", "infinity"]
 
 #
 # PRIMARY - Ubuntu
 #  
   ubuntu2204-1:
-    image: ubuntu:22.04
+    image: dockio/u2204-devesp:1.0
     hostname: server01
     container_name: u1
     privileged: true
@@ -35,28 +35,28 @@ services:
       - "./:/hostdata"      
     command: ["sleep", "infinity"]      
 
-#
-# SECONDARY - Ubuntu
-#  
-  ubuntu2204-2:
-    image: ubuntu:22.04
-    hostname: server02
-    container_name: u2
-    privileged: true   
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+# #
+# # SECONDARY - Ubuntu
+# #  
+#   ubuntu2204-2:
+#     image: ubuntu:22.04
+#     hostname: server02
+#     container_name: u2
+#     privileged: true   
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"    
+#     command: ["sleep", "infinity"] 
 
-#
-# THIRD - Ubuntu
-#  
-  ubuntu2204-3:
-    image: ubuntu:22.04
-    hostname: server03
-    container_name: u3
-    privileged: true   
-    restart: on-failure
-    volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+# #
+# # THIRD - Ubuntu
+# #  
+#   ubuntu2204-3:
+#     image: ubuntu:22.04
+#     hostname: server03
+#     container_name: u3
+#     privileged: true   
+#     restart: on-failure
+#     volumes:
+#       - "./:/hostdata"    
+#     command: ["sleep", "infinity"] 

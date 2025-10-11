@@ -1,33 +1,43 @@
 #
-#  SystemD on FEDORA
-# https://developers.redhat.com/blog/2014/05/05/running-systemd-within-docker-container
+# Splunk Test
 #
-# -> docker pull registry.fedoraproject.org/f34/s2i-base
-# bash-5.1#  yum -y update; yum clean all
-# bash-5.1#  rpm -qa | grep systemd
-# systemd-libs-248.10-1.fc34.x86_64
-# rpm-plugin-systemd-inhibit-4.16.1.3-1.fc34.x86_64
-# systemd-rpm-macros-248.10-1.fc34.noarch
-# systemd-networkd-248.10-1.fc34.x86_64
-# systemd-pam-248.10-1.fc34.x86_64
-# systemd-248.10-1.fc34.x86_64
-# bash-5.1#
-# bash-5.1# which init
-# /usr/sbin/init
+# https://hub.docker.com/r/splunk/splunk
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-with-splunk-free-license
+#
+# docker run --name so1 --hostname so1 -p 8000:8000 \
+#               -e "SPLUNK_PASSWORD=<password>" \
+#               -e "SPLUNK_START_ARGS=--accept-license" \
+#               -e "SPLUNK_LICENSE_URI=Free" \
+#               -it splunk/splunk:latest
+#
+# Password must contain at least: splunk  |    * 8 total printable ASCII character(s).              
+#
+# Add ing a "splunk volume" does not work
+#     volumes:
+#       - "splunk_data:/splunk"
+# -> docker compose up -d
+# service "splunk" refers to undefined volume splunk_data: invalid compose project
+#
+# Date: Mon 2023Jan16 16:52:27 PST
+#
 
+version: "2.13.0"
 services:
 
 #
-# FIRST - RedHat9
-# Provides SystemD functionallity
-#  
-  f34-1:
-    image: registry.fedoraproject.org/f34/s2i-base
-    hostname: f34-1
-    container_name: f34-1
-    privileged: true
-    entrypoint: ["/usr/sbin/init"]    
-    restart: on-failure
+# SPLUNK
+# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
+#
+  splunk:
+    image: splunk/splunk:latest
+    hostname: splunk
+    container_name: splunk
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_LICENSE_URI=Fee
+      - SPLUNK_PASSWORD=abc12345
+    ports:
+      - 8000:8000            
     volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+      - "./:/hostdata"
+      
