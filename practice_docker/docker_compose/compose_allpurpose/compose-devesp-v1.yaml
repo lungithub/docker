@@ -36,7 +36,6 @@
 # Mon 2023Aug21 18:22:39 PDT -- initial test deployment
 # 
 
-version: "2.13.0"
 services:
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -47,9 +46,6 @@ services:
 #
   netutils:
     image: nicolaka/netshoot:latest
-    networks:
-      custom-network:
-        ipv4_address: "172.30.1.4"
     hostname: netutils
     container_name: netutils
     restart: on-failure
@@ -69,7 +65,8 @@ services:
     image: jenkins/jenkins:lts
     networks:
       custom-network:
-        ipv4_address: "172.30.1.2"
+        priority: 10
+        ipv4_address: "172.30.1.2"       
     hostname: jenkins-cicd
     container_name: jenkins-cicd
     restart: on-failure
@@ -94,7 +91,8 @@ services:
     image: splunk/splunk:latest
     networks:
       custom-network:
-        ipv4_address: "172.30.1.3"
+        priority: 10
+        ipv4_address: "172.30.1.3"  
     hostname: splunk-cicd
     container_name: splunk-cicd
     environment:
@@ -117,7 +115,8 @@ services:
     image: dockio/u2204-devesp:2.0
     networks:
       custom-network:
-        ipv4_address: "172.30.1.11"
+        priority: 10
+        ipv4_address: "172.30.1.11"      
     hostname: devops-u1
     container_name: devops-u1
     privileged: true
@@ -140,7 +139,8 @@ services:
     image: dockio/u2204-devesp:2.0
     networks:
       custom-network:
-        ipv4_address: "172.30.1.12"
+        priority: 10
+        ipv4_address: "172.30.1.12"      
     hostname: devops-u2
     container_name: devops-u2
     privileged: true
@@ -163,7 +163,8 @@ services:
     image: dockio/u2204-devesp:2.0
     networks:
       custom-network:
-        ipv4_address: "172.30.1.13"
+        priority: 10
+        ipv4_address: "172.30.1.13"      
     hostname: devops-u3
     container_name: devops-u3
     privileged: true
@@ -186,7 +187,8 @@ services:
     image: dockio/rhel9-devesp:1.0
     networks:
       custom-network:
-        ipv4_address: "172.30.1.21"
+        priority: 10
+        ipv4_address: "172.30.1.21" 
     hostname: devops-r1
     container_name: devops-r1
     privileged: true 
@@ -206,7 +208,8 @@ services:
     image: dockio/rhel9-devesp:1.0
     networks:
       custom-network:
-        ipv4_address: "172.30.1.22"
+        priority: 10
+        ipv4_address: "172.30.1.22" 
     hostname: devops-r2
     container_name: devops-r2
     privileged: true   
@@ -228,9 +231,6 @@ services:
 #   
   prometheus-cicd:
     image: prom/prometheus
-    networks:
-      custom-network:
-        ipv4_address: "172.30.1.31"
     hostname: prometheus-cicd
     container_name: prometheus-cicd
     command:
@@ -250,9 +250,6 @@ services:
 #     
   grafana-cicd:
     image: grafana/grafana
-    networks:
-      custom-network:
-        ipv4_address: "172.30.1.32"
     hostname: grafana-cicd
     container_name: grafana-cicd
     ports:
@@ -271,33 +268,6 @@ services:
       retries: 5
     depends_on:
       - prometheus-cicd
-
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-###################           GRAPHITE           ###########################
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-#
-# GRAPHITE
-# Sat 2025Jun28 19:51:59 PDT
-#   
-  graphite-cicd:
-    image: graphiteapp/graphite-statsd
-    networks:
-      custom-network:
-        ipv4_address: "172.30.1.33"
-    hostname: graphite-cicd
-    container_name: graphite-cicd
-    ports:
-      - 83:80
-      - 2003-2004:2003-2004
-      - 2023-2024:2023-2024
-      - 8125:8125/udp
-      - 8126:8126
-    restart: unless-stopped
-    volumes:
-      - "./:/hostdata"
-      - ./graphite:/opt/graphite/conf
-      - graphite_data:/opt/graphite/storage
-
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ###################           NETWORK           ###############################
@@ -320,6 +290,3 @@ volumes:
   prom_data:
   # postgres
   postgres_data:
-  # graphite
-  graphite_data:
->>>>>>> 9c023f0cbbb26b4fe6002baac49d83834d825027
