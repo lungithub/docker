@@ -97,62 +97,24 @@ Fri 2025Oct10 16:04:01 PDT
 
 Set up multi-standby replication.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: postgres :: manage the service
----
-
-## Manage the Postgres Service
-
-Ensure that:
-    - Postgresql is running in the primary
-    - Postgresql is not running in the standby
-
-FILE: `~/.aliasrc`
-```
-#
-# Local commands
-#
-alias ltr='ls -latr'
-alias ls='ls -C1F'
-alias ll='ls -l'
-alias la='ls -la'
-alias ld='ls -1F'
-
-alias pstart='sudo systemctl start postgresql@13-main.service --no-pager'
-alias pstop='sudo systemctl stop postgresql@13-main.service --no-pager'
-alias pstatus='sudo systemctl status postgresql@13-main.service --no-pager'
-```
-
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: create replication user
+=PSQL :: pre-flight checks :: pgnode1 <-> pgnode2
 ---
 
-## Create REPLICATOR user
+Fri 2025Oct10 16:03:44 PDT
 
-First, login as the postgres user.
-Then, create the new user 'replicator' user with password 'abc123'
-```
-psql -c "CREATE USER replicator REPLICATION LOGIN ENCRYPTED PASSWORD 'abc123';"
-```
+# REPLICATOIN STATUS :: before adding second standby
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: add new standby :: pgnode1 <-> pgnode3
----
-
-
-:::::::::::::::
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: current status :: pgnode1 <-> pgnode2
----
-
-
+This is a snapshot what things look like with the following:
+- one PRIMARY: `pgnode1`
+- one STANDBY: `pgnode2`
 
 ## PRIMARY :: pgnode1
 
 Primary node information
 
 Replication slots.
+Note that only one slot shows as active with `t`.
 ```
 Fri 2025Oct10 16:04:17 PDT
 postgres@pgnode1
@@ -169,6 +131,7 @@ hist:72 -> psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slot
 ```
 
 Replication status on PRIMARY DB server.
+Only one record shown indicating there is only one standby.
 ```
 Fri 2025Oct10 16:03:44 PDT 
 postgres@pgnode1  
@@ -232,6 +195,8 @@ conninfo              | user=replicator password=******** channel_binding=prefer
 
 ## Check replication data
 
+Here we verify that data is in sync between the existing primary and standby.
+
 On the PRIMARY DB server, run the following command to check the replication data:
 ```
 Fri 2025Oct10 16:27:51 PDT
@@ -278,12 +243,139 @@ hist:87 -> psql -f ~/bin/sql/tables_test_query.sql
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: Add new standby
+#########################      ADD FIRST STANDBY      #########################
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=PSQL :: Add First Standby :: detailed steps
 ---
 
-## Steps to Add pgnode3 as Second Standby
+## Steps to Add First Standby :: pgnode2
 
-This shows the steps to setup replication on the SECOND STANDBY using `sonar_slot_2 `.
+This shows the steps to setup replication on the FIRST STANDBY using `sonar_slot_1 `.
+
+### Data Transfer Steps
+
+1. Primary: the data directory is `/var/lib/postgresql/13/main`
+2. Standby: create the data destination directory `/var/lib/postgresql/pg_from_master`
+3. Standby: do the data transfer using `pg_basebackup` to destination `/var/lib/postgresql/pg_from_master`
+4. Standby: rename the original data directory to `/var/lib/postgresql/13/main` to `/var/lib/postgresql/13/main_ORIG`
+5. Standby: move the transferred data `/var/lib/postgresql/pg_from_master` to `/var/lib/postgresql/13/main`
+6. Standby: start the postgres service
+7. Primary and standby: check replication status
+
+
+### STANDBY :: Rename the Original Data Directory
+On the STANDBY, create the destination dir for the pg_basebackup transfer.
+This is done on the postgres DATA directory, wherever that is.
+The default data dir is done here.
+```
+mv /var/lib/postgresql/13/main /var/lib/postgresql/13/main_ORIG
+```
+
+### STANDBY :: Create The Data Destination Directory
+create the data destination directory
+```
+cd /var/lib/postgresql
+mkdir pg_from_master;
+chmod 700 pg_from_master;
+ls -ld pg_from_master;
+```
+
+### STANDBY :: Do the Data Transfer
+
+On the STANDBY, run pg_basebackup to transfer the dta from the PRIMARY.
+
+user: `replicator`
+pass: `abc123`
+
+```
+time /usr/bin/pg_basebackup \
+-S sonar_slot_1 \
+-h 172.24.1.11 \
+-U replicator \
+-p 5432 \
+-D /var/lib/postgresql/pg_from_master \
+--write-recovery-conf \
+--wal-method=stream \
+--format=p \
+--progress --password --verbose
+```
+
+### STANDBY :: Move the Transferred Data
+```
+mv /var/lib/postgresql/pg_from_master /var/lib/postgresql/13/main
+```
+
+### STANDBY :: Start the postgres Service
+```
+sudo systemctl start postgresql@13-main.service --no-pager
+```
+
+### PRIMARY :: Replication Slot Status
+
+```
+Fri 2025Oct10 19:36:00 PDT
+postgres@pgnode1
+/etc/postgresql/13/main
+hist:100 -> psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slots;"
+  slot_name   | slot_type | active
+--------------+-----------+--------
+ sonar_slot_2 | physical  | f
+ sonar_slot_3 | physical  | f
+ sonar_slot_1 | physical  | t
+ sonar_slot_5 | physical  | f
+ sonar_slot_4 | physical  | f
+(5 rows)
+```
+
+### PRIMARY :: Replication Status
+
+Take note of the entries in `client_addr`.
+
+```
+Fri 2025Oct10 19:59:54 PDT
+postgres@pgnode1
+/etc/postgresql/13/main
+hist:98 -> ~/bin/replication_check_primary_v1.sh
+
+Replication status on PRIMARY DB server.
+
+-[ RECORD 1 ]----+------------------------------
+pid              | 35119
+usesysid         | 16386
+usename          | replicator
+application_name | 13/main
+client_addr      | 172.24.1.1
+client_hostname  |
+client_port      | 35982
+backend_start    | 2025-10-10 19:02:29.07298-07
+backend_xmin     |
+state            | streaming
+sent_lsn         | 0/5000148
+write_lsn        | 0/5000148
+flush_lsn        | 0/5000148
+replay_lsn       | 0/5000148
+write_lag        |
+flush_lag        |
+replay_lag       |
+sync_priority    | 1
+sync_state       | sync
+reply_time       | 2025-10-10 20:02:32.099414-07
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+#########################      ADD SECOND STANDBY      #########################
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=PSQL :: Add Second Standby :: outline
+---
+
+
+5Oct10 19:28:23 PDT
+
+## Steps to Add Second Standby :: pgnode3 (outline)
+
+This shows the steps to setup replication on the SECOND STANDBY using an available slot.
+- standby to add: `pgnode3`
+- slot to use: `sonar_slot_2 `.
 
 ### 1. Prepare pgnode3 Environment
 - Install PostgreSQL 13 on pgnode3 (same as you did for pgnode1 and pgnode2)
@@ -297,29 +389,16 @@ sudo systemctl stop postgresql@13-main.service --no-pager
 ```
 
 ### 2. PRIMARY :: Update Primary Configuration (if needed)
-On pgnode1, verify your `postgresql.conf` has sufficient capacity:
+On pgnode1, verify your `postgresql.conf` has the settings to accomodate an additional standby.
 ```bash
 max_wal_senders = 3  # Should support multiple standbys
 max_replication_slots = 10  # You already have this
 ```
 
 ### 3. STDANDBY :: Data Transfer from pgnode1 to pgnode3
-Use the same `pg_basebackup` method, but specify `sonar_slot_2`:
 
-Rename the original default location.
-```bash
-mv /var/lib/postgresql/13/main /var/lib/postgresql/13/main_ORIG;
-```
-
-Prepare the destination directory.
-```bash
-cd /var/lib/postgresql;
-mkdir pg_from_master;
-chmod 700 pg_from_master;
-ls -ld pg_from_master;
-```
-
-Run pg_basebackup.
+For the new standby, use the same `pg_basebackup` method, but specify `sonar_slot_2`.
+Run pg_basebackup to transfer the data.
 ```bash
 time /usr/bin/pg_basebackup \
 -S sonar_slot_2 \
@@ -333,7 +412,156 @@ time /usr/bin/pg_basebackup \
 --progress --password --verbose
 ```
 
-Verify the data was transferred
+Verify the data was transferred.
+The contents should look as seen here.
+```
+-> ls -l pg_from_master
+```
+
+### 4. STDANDBY :: Verify pgnode3 Recovery Settings
+The `--write-recovery-conf` flag will automatically create the recovery configuration, but ensure it points to `sonar_slot_2`.
+
+Check the recovery file. 
+Note the `primary_slot_name` setting should be `sonar_slot_2`.
+```
+-> cat pg_from_master/postgresql.auto.conf
+```
+
+Check the backup label file.
+```
+-> cat pg_from_master/backup_label
+```
+
+### 5. STDANDBY :: Move the data
+Move the new data to the expected, final destination.
+Do CP or RM depending on space availability.
+```
+mv /var/lib/postgresql/pg_from_master /var/lib/postgresql/13/main
+```
+
+### 6. STDANDBY :: start the service
+Start the postgres service.
+```
+sudo systemctl start postgresql@13-main.service --no-pager
+```
+
+### 7. PRIMARY :: Check Replication Slots
+After setup, the replication slots should show like this:
+```
+ -> psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slots;"
+```
+
+### 8. PRIMARY :: Check Replication Status
+After setup, there should be two records showing, one for each standby.
+```
+-> ~/bin/replication_check_primary_v1.sh
+```
+
+Replication check Standby-1 (pgnode2)
+```
+ ~/bin/replication_check_standby_v1.sh
+```
+
+Replication check Standby-2 (pgnode3)
+```
+~/bin/replication_check_standby_v1.sh
+```
+
+### 9. PRIMARY + STANDBY :: data verification
+PRIMARY: Run this SQL scripts to CRUD some data.
+```
+psql -f ~/bin/sql/tables_test_create.sql
+psql -f ~/bin/sql/tables_test_drop.sql
+```
+PRIMARY and STNDBYS: run this SQL script to query the data.
+```
+psql -f ~/bin/sql/tables_test_query.sql
+```
+The data should be identical on all hosts.
+
+## Benefits of Multi-Standby Configuration
+
+1. Load Distribution: Read queries can be distributed across multiple standbys
+2. High Availability: Multiple failover targets
+3. Geographic Distribution: If nodes are in different locations
+4. Maintenance Flexibility: Can take one standby offline without losing redundancy
+
+## Potential Considerations
+
+- Network Bandwidth: More standbys = more WAL streaming traffic from primary
+- Monitoring: Need to monitor multiple replication streams
+- Failover Complexity: More nodes to consider in failover scenarios
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=PSQL :: Add Second Standby :: detailed steps
+---
+
+Fri 2025Oct10 19:28:23 PDT
+
+## Steps to Add Second Standby :: pgnode3 (detailed steps)
+
+This shows the steps to setup replication on the SECOND STANDBY using an available slot.
+- standby to add: `pgnode3`
+- slot to use: `sonar_slot_2 `.
+
+### 1. Prepare pgnode3 Environment
+- Install PostgreSQL 13 on pgnode3 (same as you did for pgnode1 and pgnode2)
+- Create the data directory structure
+- Ensure network connectivity between pgnode1 and pgnode3
+
+Stop the service on pgnodd3.
+
+```bash
+sudo systemctl stop postgresql@13-main.service --no-pager
+```
+
+### 2. PRIMARY :: Update Primary Configuration (if needed)
+On pgnode1, verify your `postgresql.conf` has the settings to accomodate an additional standby.
+```bash
+max_wal_senders = 3  # Should support multiple standbys
+max_replication_slots = 10  # You already have this
+```
+The above means that with `max_wal_senders` set to 3, we can have up to that number of hosts in the DB cluster.
+- one primary: pgnode1
+- first standby: pgnode2
+- second standby: pgnode3
+
+### 3. STDANDBY :: Data Transfer from pgnode1 to pgnode3
+When we added the first standby, pgnode2, we used `sonar_slot_1`.
+For the new standby, use the same `pg_basebackup` method, but specify `sonar_slot_2`.
+
+Rename the original default location.
+We will replace this main directory with the data we transfer from the primary.
+```bash
+mv /var/lib/postgresql/13/main /var/lib/postgresql/13/main_ORIG;
+```
+
+Prepare the destination directory.
+```bash
+cd /var/lib/postgresql;
+mkdir pg_from_master;
+chmod 700 pg_from_master;
+ls -ld pg_from_master;
+```
+
+Run pg_basebackup to transfer the data.
+- user: `replicator`
+- pass: `abc123`
+```bash
+time /usr/bin/pg_basebackup \
+-S sonar_slot_2 \
+-h 172.24.1.11 \
+-U replicator \
+-p 5432 \
+-D /var/lib/postgresql/pg_from_master \
+--write-recovery-conf \
+--wal-method=stream \
+--format=p \
+--progress --password --verbose
+```
+
+Verify the data was transferred.
+The contents should look as seen here.
 ```
 Fri 2025Oct10 20:04:47 PDT
 postgres@pgnode3
@@ -397,8 +625,8 @@ START TIMELINE: 1
 ```
 
 ### 5. STDANDBY :: Move the data
-
 Move the new data to the expected, final destination.
+Do CP or RM depending on space availability.
 ```
 mv /var/lib/postgresql/pg_from_master /var/lib/postgresql/13/main
 
@@ -412,14 +640,14 @@ cp -r /var/lib/postgresql/pg_from_master /var/lib/postgresql/13/main
 ```
 
 ### 6. STDANDBY :: start the service
-
+Start the postgres service.
 ```
 sudo systemctl start postgresql@13-main.service --no-pager
 ```
 
 ### 7. PRIMARY :: Check Replication Slots
 
-After setup, your replication slots should show:
+After setup, the replication slots should show like this:
 ```
  -> psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slots;"
   slot_name   | slot_type | active
@@ -545,253 +773,24 @@ conninfo              | user=replicator password=******** channel_binding=prefer
 ```
 
 ### 9. PRIMARY + STANDBY :: data verification
-
-
-
-## Benefits of Multi-Standby Configuration
-
-1. **Load Distribution**: Read queries can be distributed across multiple standbys
-2. **High Availability**: Multiple failover targets
-3. **Geographic Distribution**: If nodes are in different locations
-4. **Maintenance Flexibility**: Can take one standby offline without losing redundancy
-
-## Potential Considerations
-
-- **Network Bandwidth**: More standbys = more WAL streaming traffic from primary
-- **Monitoring**: Need to monitor multiple replication streams
-- **Failover Complexity**: More nodes to consider in failover scenarios
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: remove standby
----
-
-## REMOVE STANDBY
-
-Consider this scenario:
-
-primary (pgnode1)
---> standby1 (pgnode2) using sonar_slot_1
---> standby2 (pgnode3) using sonar_slot_2
-
-I want to remove standby2 (pgnode3) from the standby configuration.
-
-### Step-by-Step Removal Process
-
-#### 1. Stop the Standby Server (pgnode3)
-**NO DOWNTIME ON PRIMARY** - This only affects pgnode3
-```bash
-# On pgnode3
-sudo systemctl stop postgresql-13
+PRIMARY: Run this SQL scripts to CRUD some data.
 ```
-
-#### 2. Verify Replication Status on Primary
-Check that pgnode3 is no longer streaming:
-```sql
-# On pgnode1
-SELECT application_name, client_addr, state, slot_name 
-FROM pg_stat_replication;
+psql -f ~/bin/sql/tables_test_create.sql
+psql -f ~/bin/sql/tables_test_drop.sql
 ```
-You should only see pgnode2 (sonar_slot_1) active.
-
-#### 3. Drop the Replication Slot on Primary
-**NO DOWNTIME ON PRIMARY** - Safe operation while primary is running
-```sql
-# On pgnode1
-SELECT pg_drop_replication_slot('sonar_slot_2');
+PRIMARY and STNDBYS: run this SQL script to query the data.
 ```
-
-#### 4. Verify Slot Removal
-```sql
-# On pgnode1
-SELECT slot_name, slot_type, active FROM pg_replication_slots;
+psql -f ~/bin/sql/tables_test_query.sql
 ```
-sonar_slot_2 should no longer appear in the list.
+The data should be identical on all hosts.
 
-#### 5. Clean Up pgnode3 (Optional)
-If completely decommissioning pgnode3:
-```bash
-# On pgnode3 - Remove PostgreSQL data
-sudo rm -rf /var/lib/postgresql/13/main
-sudo rm -rf /var/lib/postgresql/pg_from_master
-
-# Or convert to standalone database
-# Remove standby.signal file to make it a regular database
-rm /var/lib/postgresql/13/main/standby.signal
-```
-
-### Important Notes
-
-**NO PRIMARY DOWNTIME REQUIRED**
-- The primary (pgnode1) continues serving clients normally
-- pgnode2 replication remains unaffected
-- Only pgnode3 experiences downtime during its shutdown
-
-**Safe Order of Operations**
-1. Stop standby first (prevents connection errors)
-2. Drop replication slot second (cleans up WAL retention)
-3. Clean up standby files last (optional)
-
-**What Happens to WAL Files**
-- Once slot is dropped, WAL files for that slot are no longer retained
-- This frees up disk space on the primary
-- No impact on other replication slots
-
-### Verification Commands
-
-After removal, verify the setup:
-```sql
-# Check remaining replication slots
-SELECT slot_name, slot_type, active FROM pg_replication_slots;
-
-# Check active replication connections
-SELECT application_name, client_addr, state FROM pg_stat_replication;
-
-# Check WAL sender processes
-SELECT pid, state, sent_lsn, write_lsn FROM pg_stat_replication;
-```
-
-Expected result: Only sonar_slot_1 and pgnode2 should remain active.
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: data transfer :: fist standby
----
-
-## Steps to Add pgnode2 as First Standby
-
-This shows the steps to setup replication on the FIRST STANDBY using `sonar_slot_1 `.
-
-### Data Transfer Steps
-
-1. Primary: the data directory is `/var/lib/postgresql/13/main`
-2. Standby: created the data destination directory `/var/lib/postgresql/pg_from_master`
-3. Standby: I did the transfer using `pg_basebackup` to destination `/var/lib/postgresql/pg_from_master`
-4. Standby: renamed the directory to `/var/lib/postgresql/13/main` to `/var/lib/postgresql/13/main_ORIG`
-5. Standby: copied the contents of `/var/lib/postgresql/pg_from_master` to `/var/lib/postgresql/13/main`
-6. Standby: started the postgres service
-7. Primary and standby: check replication status
-```
-Fri 2025Oct10 16:43:36 PDT
-postgres@pgnode2
-~
-hist:87 -> ls
-13/
-bin/
-pg_from_master/
-```
-
-### Data Destination Prep
-
-On the STANDBY, create the destination dir for the pg_basebackup transfer.
-This is done on the DATA directory, wherever that is.
-
-```
-mv /var/lib/postgresql/13/main /var/lib/postgresql/13/main_ORIG
-```
-
-```
-cd /var/lib/postgresql
-mkdir pg_from_master;
-chmod 700 pg_from_master;
-ls -ld pg_from_master;
-```
-
-### Data Transfer Command
-
-On the STANDBY, run pg_basebackup to transfer the dta from the PRIMARY.
-
-user: `replicator`
-pass: `abc123`
-
-```
-time /usr/bin/pg_basebackup \
--S sonar_slot_1 \
--h 172.24.1.11 \
--U replicator \
--p 5432 \
--D /var/lib/postgresql/pg_from_master \
---write-recovery-conf \
---wal-method=stream \
---format=p \
---progress --password --verbose
-```
-
-Move the transferred data to its destination.
-```
-mv /var/lib/postgresql/pg_from_master /var/lib/postgresql/13/main
-```
-
-### PRIMARY :: Replication Slot Status
-
-```
-Fri 2025Oct10 19:36:00 PDT
-postgres@pgnode1
-/etc/postgresql/13/main
-hist:100 -> psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slots;"
-  slot_name   | slot_type | active
---------------+-----------+--------
- sonar_slot_2 | physical  | f
- sonar_slot_3 | physical  | f
- sonar_slot_1 | physical  | t
- sonar_slot_5 | physical  | f
- sonar_slot_4 | physical  | f
-(5 rows)
-```
-
-### PRIMARY :: replication status
-
-Take note of the entries in `client_addr`.
-
-```
-Fri 2025Oct10 19:59:54 PDT
-postgres@pgnode1
-/etc/postgresql/13/main
-hist:98 -> ~/bin/replication_check_primary_v1.sh
-
-Replication status on PRIMARY DB server.
-
--[ RECORD 1 ]----+------------------------------
-pid              | 35119
-usesysid         | 16386
-usename          | replicator
-application_name | 13/main
-client_addr      | 172.24.1.1
-client_hostname  |
-client_port      | 35982
-backend_start    | 2025-10-10 19:02:29.07298-07
-backend_xmin     |
-state            | streaming
-sent_lsn         | 0/5000148
-write_lsn        | 0/5000148
-flush_lsn        | 0/5000148
-replay_lsn       | 0/5000148
-write_lag        |
-flush_lag        |
-replay_lag       |
-sync_priority    | 1
-sync_state       | sync
-reply_time       | 2025-10-10 20:02:32.099414-07
-
-```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ################################################################################
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=APPENDIX A :: reload postgres config
+=APPENDIX A :: aaa
 ---
 
-Fri 2025Oct10 19:26:05 PDT
-
-## Postgres Reload Config
-
-Execute after making changes that do not require service restart.
-```
--> psql -c "SELECT pg_reload_conf();"
-```
-
-A log entry like this confirms the config is correct.
-```
-2025-10-10 19:21:05.685 PDT [33169] LOG:  received SIGHUP, reloading configuration files
-```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =OUTPUT A :: stdout :: result of running some command or script at the CLI
