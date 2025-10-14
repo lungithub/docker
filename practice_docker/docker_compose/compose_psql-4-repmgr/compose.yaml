@@ -128,37 +128,12 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "portainer_data:/app"
     restart: always
-
-#
-# SPLUNK
-# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
-#
-  splunk2:
-    image: splunk/splunk:latest
-    hostname: splunk2
-    container_name: splunk2
-    networks:
-      net1:
-        priority: 10
-        ipv4_address: "172.27.1.10"
-      net2:
-        priority: 0
-      net3:
-        priority: 0     
-    environment:
-      - SPLUNK_START_ARGS=--accept-license
-      - SPLUNK_LICENSE_URI=Fee
-      - SPLUNK_PASSWORD=abc12345
-    ports:
-      - 8000:8000            
-    volumes:
-      - "./:/hostdata"
       
 #
 # CLIENT - CentOS8
 #  
   client1:
-    image: centos:8.4.2105
+    image: dockio/u2204-arm64v8:1.0
     networks:
       net1:
         priority: 10
@@ -180,7 +155,7 @@ services:
 # WITNESS - CentOS8
 #  
   witness:
-    image: centos:8.4.2105
+    image: dockio/u2204-arm64v8:1.0
     networks:
       net1:
         priority: 10
@@ -202,7 +177,7 @@ services:
 # FIRST - CentOS8
 #  
   pgnode1:
-    image: centos:8.4.2105
+    image: dockio/u2204-arm64v8:1.0
     networks:
       net1:
         priority: 10
@@ -223,7 +198,7 @@ services:
 # SECOND - CentOS8
 #  
   pgnode2:
-    image: centos:8.4.2105
+    image: dockio/u2204-arm64v8:1.0
     networks:
       net1:
         priority: 0
@@ -245,7 +220,7 @@ services:
 # THIRD - CentOS8
 #  
   pgnode3:
-    image: centos:8.4.2105
+    image: dockio/u2204-arm64v8:1.0
     networks:   
       net1:
         priority: 0

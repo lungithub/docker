@@ -36,29 +36,9 @@ services:
     container_name: netutils
     restart: on-failure
     volumes:
-      - "./:/hostdata"
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"       
+      - "./:/hostdata"     
     command: ["sleep", "infinity"] 
  
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-####################               SPLUNK            ########################
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- 
-# Mon 2023Jan16 17:18:03 PST
-# https://splunk.github.io/docker-splunk/EXAMPLES.html#create-standalone-from-compose
-#
-  splunk:
-    image: splunk/splunk:latest
-    hostname: splunk
-    container_name: splunk
-    environment:
-      - SPLUNK_START_ARGS=--accept-license
-      - SPLUNK_LICENSE_URI=Fee
-      - SPLUNK_PASSWORD=abc12345
-    ports:
-      - 8000:8000            
-    volumes:
-      - "./:/hostdata"
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"      
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ####################               PGADMIN            ########################
@@ -87,8 +67,7 @@ services:
     privileged: true
     restart: on-failure
     volumes:
-      - "./:/hostdata"
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"
+      - "./:/hostdata"    
     command: ["sleep", "infinity"]
 
 #
@@ -98,13 +77,12 @@ services:
     image: dockio/u2204-devesp:1.0
     hostname: ubuntu2204-2
     container_name: u2
+    entrypoint: ["/usr/sbin/init"]
     privileged: true   
     restart: on-failure
     volumes:
       - "./:/hostdata"    
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"
-    command: ["sleep", "infinity"] 
-
+    command: ["sleep", "infinity"]
 #
 # THIRD - Ubuntu
 #  
@@ -115,9 +93,8 @@ services:
     privileged: true   
     restart: on-failure
     volumes:
-      - "./:/hostdata"
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"
-    command: ["sleep", "infinity"] 
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"]
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ###################           PROMETHEUS           ###########################
@@ -155,7 +132,6 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=grafana
     volumes:
       - "./:/hostdata"      
-      - "/Users/orion/Documents/DATAM2/learning/MyConfig:/MyConfig"
       - ./grafana:/etc/grafana/provisioning/datasources
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

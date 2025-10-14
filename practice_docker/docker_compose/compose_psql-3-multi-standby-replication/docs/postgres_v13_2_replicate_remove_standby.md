@@ -156,13 +156,6 @@ psql -c "SELECT pid, state, sent_lsn, write_lsn FROM pg_stat_replication;"
 Expected result: Only sonar_slot_1 and pgnode2 should remain active.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: remove standby :: detailed steps
----
-
-
-
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ############################################################################MARK
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =APPENDIX A :: container :: extra data on some task

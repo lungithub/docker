@@ -369,7 +369,7 @@ reply_time       | 2025-10-10 20:02:32.099414-07
 ---
 
 
-5Oct10 19:28:23 PDT
+2025Oct10 19:28:23 PDT
 
 ## Steps to Add Second Standby :: pgnode3 (outline)
 
