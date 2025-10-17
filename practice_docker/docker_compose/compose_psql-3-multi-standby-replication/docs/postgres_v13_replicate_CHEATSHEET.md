@@ -155,6 +155,36 @@ Then, create the new user 'replicator' user with password 'abc123'
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=PSQL :: create standard user, grant access to a db
+---
+
+Create a user and grant access to a database.
+
+## Create standard user
+
+```
+psql -c "CREATE ROLE dbuser1 WITH LOGIN PASSWORD 'abc123';"
+```
+
+##  Create the test database
+
+```
+psql -c "CREATE DATABASE testdb OWNER dbuser1;"
+```
+
+## Grant all privileges on the database
+
+```
+psql -c "GRANT ALL PRIVILEGES ON DATABASE testdb TO dbuser1;"
+```
+
+## Test connection
+
+```
+psql -h 10.233.218.199 -U dbuser1 -d testdb
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =PSQL :: replication :: status
 ---
 
@@ -194,6 +224,37 @@ psql -c "SELECT pg_is_in_recovery();"
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=PSQL :: connection test
+---
+
+Sat 2025Oct11 21:07:13 PDT
+
+## Connection test
+
+Do a connection test before doing the data transfer from PRIMARY to SECONDARY.
+
+Test one of two ways:
+    • Use the sonar postgres user created as part of the ansible role
+    • create a temp user and a temp database
+
+Then connect to the PRIMARY from a client.
+
+Syntax:
+    /bin/psql -U sonar -h <primary-ip-address>  -d <database>
+
+Connect with the sonar user and DB.
+    • User: `replicator`
+    • Pass: `abc123`
+    • DB: `postgres`
+```
+-> psql -h 10.233.218.199 -U replicator -d postgres
+psql (13.22 (Ubuntu 13.22-1.pgdg22.04+1), server 13.14 (Ubuntu 13.14-1.pgdg22.04+1))
+Type "help" for help.
+
+postgres=> \q
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =PSQL :: replication :: slot check
 ---
 
@@ -228,37 +289,6 @@ If you failover to a standby, you must create replication slots for new standby
 Check WAL sender processes
 ```
 psql -c "SELECT pid, state, sent_lsn, write_lsn FROM pg_stat_replication;"
-```
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-=PSQL :: connection test
----
-
-Sat 2025Oct11 21:07:13 PDT
-
-## Connection test
-
-Do a connection test before doing the data transfer from PRIMARY to SECONDARY.
-
-Test one of two ways:
-    • Use the sonar postgres user created as part of the ansible role
-    • create a temp user and a temp database
-
-Then connect to the PRIMARY from a client.
-
-Syntax:
-    /bin/psql -U sonar -h <primary-ip-address>  -d <database>
-
-Connect with the sonar user and DB.
-    • User: `replicator`
-    • Pass: `abc123`
-    • DB: `postgres`
-```
--> psql -h 10.233.218.199 -U replicator -d postgres
-psql (13.22 (Ubuntu 13.22-1.pgdg22.04+1), server 13.14 (Ubuntu 13.14-1.pgdg22.04+1))
-Type "help" for help.
-
-postgres=> \q
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

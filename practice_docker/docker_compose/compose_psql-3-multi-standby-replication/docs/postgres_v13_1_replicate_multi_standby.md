@@ -39,6 +39,9 @@ none
 
 [-] REFERENCE
 
+Streaming replication failover (Fujitsu)
+[https://www.postgresql.fastware.com/postgresql-insider-str-rep-ope#:~:text=By%20doing%20the%20above%2C%20the,be%20met%20when%20running%20pg_rewind:]
+
 -------------------------------------------------------------------------------
 [-] Revision History
 
@@ -193,7 +196,7 @@ sender_port           | 5432
 conninfo              | user=replicator password=******** channel_binding=prefer dbname=replication host=172.24.1.11 port=5432 fallback_application_name=13/main sslmode=prefer sslcompression=0 sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any
 ```
 
-## Check replication data
+## Validate :: replication data
 
 Here we verify that data is in sync between the existing primary and standby.
 
@@ -806,6 +809,10 @@ Fri 2025Oct10 19:26:05 PDT
 
 ## HBA Config
 
+This configuration file controls client authentication, including which users can connect to which databases and how.
+It's wide open, suitable only for testing purposes. 
+It should not be used in a production environment.
+
 This config allows the following among the nodes:
 - db replication
 - user connections from standbys to primary -- `IPv4 local connections`
@@ -838,7 +845,6 @@ local	replication	all                                    trust
 host	replication	replicator	127.0.0.1/32		trust
 host	replication	all		::1/128			trust
 host	replication	replicator	0.0.0.0/0		trust
-
 ```
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -847,24 +853,104 @@ host	replication	replicator	0.0.0.0/0		trust
 
 [-] PROBLEM
 
-Update the STANDBY to have the `application_name` in the connections settings.
-Update: `/var/lib/postgresql/13/main/postgresql.auto.conf`
+Having configured replication using one primary and two standby databases, one of the standby databases shows `sync_state | potential`.
+We need to ensure that the `application_name` is set correctly in the standby's connection settings.
 
+```
+-> /postgres/bin/replication_check_primary_v1.sh
+
+Replication status on PRIMARY DB server.
+
+-[ RECORD 1 ]----+------------------------------
+pid              | 2527742
+usesysid         | 69333
+usename          | replicator
+application_name | walreceiver
+client_addr      | 10.167.212.192
+client_hostname  |
+client_port      | 47914
+backend_start    | 2025-09-19 13:09:27.82371+00
+backend_xmin     |
+state            | streaming
+sent_lsn         | 47/6B09DB80
+write_lsn        | 47/6B09DB80
+flush_lsn        | 47/6B09DB80
+replay_lsn       | 47/6B09DB80
+write_lag        |
+flush_lag        |
+replay_lag       |
+sync_priority    | 1
+sync_state       | sync
+reply_time       | 2025-10-15 17:04:50.170222+00
+-[ RECORD 2 ]----+------------------------------
+pid              | 1052073
+usesysid         | 69333
+usename          | replicator
+application_name | walreceiver
+client_addr      | 10.167.223.157
+client_hostname  |
+client_port      | 44356
+backend_start    | 2025-10-15 01:00:35.970569+00
+backend_xmin     |
+state            | streaming
+sent_lsn         | 47/6B09DB80
+write_lsn        | 47/6B09DB80
+flush_lsn        | 47/6B09DB80
+replay_lsn       | 47/6B09DB80
+write_lag        |
+flush_lag        |
+replay_lag       |
+sync_priority    | 1
+sync_state       | potential
+reply_time       | 2025-10-15 17:04:49.630661+00
+```
+
+To address this,
+
+(1) update the STANDBY to have the `application_name` in the connections settings.
+Update: `/var/lib/postgresql/13/main/postgresql.auto.conf`
+(2) update the `synchronous_standby_names` setting in the PRIMARY DB.
+```
+synchronous_standby_names = 'ANY 1 (standby1, standby2)'
+```
 
 [-] RESEARCH
 
 My PRIMARY DB has ip address `172.24.1.11` and the user is `replicator` 
 In the PRIMARY DB server I have this in the postgresql.conf `synchronous_standby_names = '*'`
-If I have this on standby1 `primary_conninfo = 'host=172.24.1.11 port=5432 user=replicator application_name=standby1' `
-and this on standby2 `primary_conninfo = 'host=172.24.1.11 port=5432 user=replicator application_name=standby2' `
+If I have this on standby1 
+  `primary_conninfo = 'host=172.24.1.11 port=5432 user=replicator application_name=standby1' `
+and this on standby2 
+  `primary_conninfo = 'host=172.24.1.11 port=5432 user=replicator application_name=standby2' `
 will that work? do I need to restart the STANDBY DBs and the PRIMARY DB?
+
+On the STANDBY do the following:
+- do a couple of ALTER SYSTEM commands as given in this discussion
+- This is done while the postgres service is running
+- Once done, restart the postgres service
+
+Those ALTER SYSTEM commands can be executed on the standby databases even after replication is already active and running.
+They are safe to execute During Active Replication
+ALTER SYSTEM is local. These commands only modify the local `postgresql.auto.conf` file on each standby.
+The changes don't take effect until the PostgreSQL service is restarted on the standby where this is done.
+This process is non-disruptive. The current replication connection continues unchanged until restart.
 
 [-] SOLUTION
 
-It is a problem to try and put primary_conninfo and primary_slot_name into a single ALTER SYSTEM command because ALTER SYSTEM is designed to set one parameter at a time. primary_conninfo and primary_slot_name are two separate and distinct server configuration parameters in PostgreSQL
-
+In this scenario, we have already established the replication connections between the PRIMARY and STANDBY databases.
+Now we want to use the two ALTER commands
+- one to set the application name
+- one to set the primary slot name
+Note that a single ALTER SYSTEM command cannot be used because ALTER SYSTEM is designed to set one parameter at a time. primary_conninfo and primary_slot_name are two separate and distinct server configuration parameters in PostgreSQL
 Each ALTER SYSTEM command will update `/var/lib/postgresql/13/main/postgresql.auto.conf`
+The ALTER commands would simply append `application_name=<name>` to the end of the existing `primary_conninfo`.
+For this exercise, you simply take the existing contents of the `primary_conninfo` and add the `application_name` parameter.
+You must restart the postgres service in the standby instances for the changes to take effect.
 
+Create a backup copy of the file befor making any changes.
+```
+cp /db/pg13/postgresql.auto.conf /db/pg13/postgresql.auto.conf_2025Oct15.$$
+```
 
 ## STANDBY - ALTER connection settings
 
@@ -882,7 +968,7 @@ ALTER SYSTEM SET primary_slot_name = 'sonar_slot_1';
 -- (This step is done from your operating system's command line, not psql)
 -- pg_ctl restart -D /var/lib/postgresql/13/main
 ```
-Stop/start this DB Standby.
+Stop/start the postgres service after applying the change..
 
 :: standby2
 
@@ -898,44 +984,65 @@ ALTER SYSTEM SET primary_slot_name = 'sonar_slot_2';
 -- (This step is done from your operating system's command line, not psql)
 -- pg_ctl restart -D /var/lib/postgresql/13/main
 ```
-Stop/start this DB Standby.
 
-standby1 - before
+
+Stop/start the postgres service after applying the change.
+
+## STANDBY - before and after primary_conninfo
+
+standby1 - original
 ```
 primary_conninfo = 'user=replicator password=abc123 channel_binding=prefer host=172.24.1.11 port=5432 sslmode=prefer sslcompression=0 sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any'
 primary_slot_name = 'sonar_slot_1'
 ```
 
-standby1 - ater
+standby1 - modified
 ```
 primary_conninfo = 'user=replicator password=abc123 channel_binding=prefer host=172.24.1.11 port=5432 sslmode=prefer sslcompression=0 sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any application_name=standby1'
 primary_slot_name = 'sonar_slot_1'
 ```
 
-standby2 - before
+standby2 - original
 ```
 primary_conninfo = 'user=replicator password=abc123 channel_binding=prefer host=172.24.1.11 port=5432 sslmode=prefer sslcompression=0 sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any'
 primary_slot_name = 'sonar_slot_2'
 ```
 
-standby2 - after
+standby2 - modified 
 ```
 primary_conninfo = 'user=replicator password=abc123 channel_binding=prefer host=172.24.1.11 port=5432 sslmode=prefer sslcompression=0 sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer krbsrvname=postgres target_session_attrs=any application_name=standby1'
 primary_slot_name = 'sonar_slot_2'
 ```
 
-### PRIMARY - update postgresql.conf
+### PRIMARY - add synchronous_standby_names to postgresql.conf
 
-I'm choosing "ANY 1".
-Using "ANY 2" seems risky if a standby goes down.
+After changing the `primary_conninfo` and `primary_slot_name` settings in the standby servers, you need to configure the primary server to recognize these standbys.
+
+Setting `synchronous_standby_names` controls synchronous replication behavior and ensures transaction durability across your standby servers.
+
+Add the line shown to `postgresql.conf`:
 ```
 ##synchronous_standby_names = '*'
 ##synchronous_standby_names = 'ANY 2 (standby1, standby2)'
 synchronous_standby_names = 'ANY 1 (standby1, standby2)'
 ```
+I'm choosing "ANY 1".
+Using "ANY 2" seems risky if a standby goes down.
+- `ANY 1`: Requires at least 1 standby to acknowledge before considering a transaction committed
+- `ANY 2`: Requires at least 2 standbys to acknowledge (riskier if one standby fails)
+- `*`: All connected standbys must acknowledge
 
+The names standby1 and standby2 must match the application_name values you set in the standby configurations
+
+After making this change, you need to reload the primary's configuration:
+```
+pqql -c "SELECT pg_reload_conf();"
+```
 
 ## ALL - replication state
+
+Once all is done, check the replication on the PRIMARY.
+It should show two records with sync_state of `quorum`.
 
 :: PRIMARY
 
@@ -994,7 +1101,7 @@ reply_time       | 2025-10-10 22:19:05.591798-07
 :: STANDBY
 
 Each standby shows the corresponding `application_name`.
-Their LSB matches the PRIMARY: `0/702F4C0`
+Their LSN matches the PRIMARY: `0/702F4C0`
 
 ```
 Fri 2025Oct10 22:20:20 PDT
@@ -1050,7 +1157,6 @@ conninfo              | user=replicator password=******** channel_binding=prefer
 
 [-] REFERENCE
 
-
 Google AI chat:
 [https://www.google.com/search?q=For+this%2C+synchronous_standby_names+%3D+%27standby1%2C+standby2%27%2C+is+standby1+a+hostname+or+ip+address%2C+other%3F&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRiPAjIHCAIQIRiPAjIHCAMQIRiPAtIBCjIxODIxajBqMTWoAgiwAgHxBY307Bd4ouRq&sourceid=chrome&ie=UTF-8&udm=50&fbs=AIIjpHxU7SXXniUZfeShr2fp4giZud1z6kQpMfoEdCJxnpm_3W-pLdZZVzNY_L9_ftx08kxElMEpo90JBBY0TEXYKcN_lPATbVTMCnYfcHh7XdvGafSOvPSd3fidQPWr76qIT3UaGfj_2sRKINePkrsUa2Zmr3be064LWdVjznIbFo3ci9y1twO3ldT3BLxvCdpeg95EDVPBCcy9m_e1Y3-kNb3KqMhuew&ved=2ahUKEwjf5NiCnpuQAxW-kmoFHdVeNlUQ0NsOegQIFRAA&aep=10&ntc=1&mtid=o9PpaNTXKZ64qtsP9puPkQ4&mstk=AUtExfDv7zbUSwdWu7m8Up1BnPHGwHTJefTETPidGtaQEZ78p8Ntw3rBZ8987UX0PmaCaFnh43Yz6FZI9XbSG9X76O4TOPPxJDZt-tzgVqV8sBtuGkhbiR-Lf27nCKQAeRvvpWH01wXK0S-ChprDcGmG5WaZoiGx93F4C5MYBqIvYHW62Z532-XKjKOqozGlgW86E6ZsqLy5fxUcg9x1ZwLcOvNo4DUKGt7_atMzwIbSTdP5mHQ_aTEzsP9r22gleHgJu1oPJtLh22aiCJHiAlCLUhm5xcMEHMDISTPf-kbnTvKdJ3rF2FmE3p7iKHlHczecZ2BAPTCfp4lBgA&csuir=1]
 
@@ -1068,5 +1174,64 @@ Streaming replication failover
 
 ..............
 
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=TROUBLESHOOTING B :: synchronous_standby_names format
+---
 
+[-] PROBLEM
+
+Change the synchronous_standby_names. This is done on the primary DB.
+
+During the testing phase I had used this setting:
+```
+synchronous_standby_names = 'ANY 1 (standby1, standby2)'
+```
+That worked fine.
+
+Then I wanted to expand the names to add a bit more info to easily identify the standbys, so I used this:
+```
+synchronous_standby_names = 'ANY 1 (my-firstdb-standby1, my-seconddb-standby1'
+```
+That uses dashes '-' in the names.
+
+But, restarting the service in the primary showed an error.
+
+```log
+2025-10-15 17:42:38.067 GMT    2025-10-15 17:42:38 GMT [2527714]DETAIL:  syntax error at or near "-"
+2025-10-15 17:42:38.067 GMT    2025-10-15 17:42:38 GMT [2527714]LOG:  configuration file "/etc/postgresql/13/main/postgresql.conf" contains errors; unaffected changes were applied
+```
+
+[-] RESEARCH
+
+I looked around and found that the issue was with the use of dashes in the standby names. 
+PostgreSQL expects identifiers to be:
+- either camel case, with underscores (without special characters), or
+- double-quoted if they contain special characters such as dashes
+
+[-] SOLUTION
+
+FILE: `/etc/postgresql/13/main/postgresql.conf`
+
+```
+synchronous_standby_names = 'ANY 1 (standby1, standby2)' # GOOD, simple
+
+synchronous_standby_names = 'ANY 1 (myStandby1, myStandby2)' # GOOD, simple
+
+synchronous_standby_names = 'ANY 1 (my-firstdb-standby1, my-seconddb-standby1' # BAD, uses dashes
+
+synchronous_standby_names = 'ANY 1 ("my-firstdb-standby1", "my-seconddb-standby1"' # GOOD uses dashes, and quotes
+
+synchronous_standby_names = 'ANY 1 (my_firstdb_standby1, my_seconddb_standby1)'# GOOD: uses underscaore
+```
+
+[-] REFERENCE
+
+::
+::::::::::::::
+::
+
+..............
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

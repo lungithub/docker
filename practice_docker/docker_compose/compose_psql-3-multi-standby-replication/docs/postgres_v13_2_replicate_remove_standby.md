@@ -111,13 +111,15 @@ sonar_slot_2 should no longer appear in the list.
 
 #### 5. Clean Up pgnode3 (Optional)
 
-If completely decommissioning pgnode3:
+(pgnode3) If completely decommissioning pgnode3:
 ```
 # On pgnode3 - Remove PostgreSQL data
 sudo rm -rf /var/lib/postgresql/13/main
 sudo rm -rf /var/lib/postgresql/pg_from_master
+```
 
-# Or convert to standalone database
+(pgnode3) Or convert to standalone database
+```
 # Remove standby.signal file to make it a regular database
 rm /var/lib/postgresql/13/main/standby.signal
 ```
@@ -141,7 +143,7 @@ rm /var/lib/postgresql/13/main/standby.signal
 
 ### Verification Commands
 
-After removal, verify the setup:
+On the PRIMARY, after removal, verify the setup:
 ```sql
 # Check remaining replication slots
 psql -c "SELECT slot_name, slot_type, active FROM pg_replication_slots;"

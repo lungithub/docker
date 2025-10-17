@@ -233,7 +233,9 @@ services:
 #  
   pgnode1:
     # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    # image: dockio/u2204-arm64v8:1.0
+    image: dockio/pgnode1-snapshot:20251007-151621
+    pull_policy: never
     networks:
       net1:
         priority: 10
@@ -255,7 +257,9 @@ services:
 #  
   pgnode2:
     # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    # image: dockio/u2204-arm64v8:1.0
+    image: dockio/pgnode2-snapshot:20251007-151709
+    pull_policy: never
     networks:
       net1:
         priority: 0
@@ -278,7 +282,9 @@ services:
 #  
   pgnode3:
     # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    # image: dockio/u2204-arm64v8:1.0
+    image: dockio/pgnode3-snapshot:20251007-151759
+    pull_policy: never
     networks:   
       net1:
         priority: 0
