@@ -97,6 +97,59 @@ State	        Preserves the state of the environment,         Tears down the ent
 :::::::::::::::
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=POSTGRES :: manage the service
+---
+
+```
+sudo systemctl start postgresql@13-main.service --no-pager
+sudo systemctl stop postgresql@13-main.service --no-pager
+sudo systemctl status postgresql@13-main.service --no-pager
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=DOCKER :: postgres user and group check
+---
+
+## Check for Postgres User and Group
+
+```
+getent group postgres
+getent passwd postgres
+```
+If the group or user does not exist, create them with:
+```
+sudo groupadd -g 112 postgres
+sudo useradd -r -u 112 -g postgres postgres
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=DOCKER :: stop docker compose service
+---
+
+## Stop Docker Compose Service
+
+Stop the service
+Remove the container
+Start the service anew
+```
+docker compose stop pgnode1;
+docker compose rm -f pgnode1;
+docker compose up -d pgnode1;
+echo
+```
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+=DOCKER :: remove containers
+---
+
+## Remove Specific Containers
+To remove specific containers, use the following command:
+```
+docker compose rm -f <container_name>
+```
+Replace `<container_name>` with the name of the container you want to remove.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 =DOCKER :: pull policy
 ---
 
