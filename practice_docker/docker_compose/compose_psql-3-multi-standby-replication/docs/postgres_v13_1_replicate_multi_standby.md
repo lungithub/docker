@@ -4,7 +4,7 @@ Author ....: John Doe
 
 [-] DESCRIPTION
 
-## Add new standby
+## Best Practices for Ongoing Maintenance
 
 1. Create a new replication slot on the primary node (pgnode1) for the new standby (pgnode3).
 2. Create a new subscription on the standby node (pgnode3) to connect to the primary node (pgnode1) using the new replication slot.
@@ -45,7 +45,7 @@ Streaming replication failover (Fujitsu)
 -------------------------------------------------------------------------------
 [-] Revision History
 
-Date: Sat 2018Dec08 13:23:12 PST
+Date: Fri 2025Oct10 16:04:01 PDT  
 Author: foot
 Reason for change: Initial doc
 
