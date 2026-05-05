@@ -1,0 +1,67 @@
+#
+# I'm using the Awesome Compose exercises.
+# This one is to spin up several CentOS servers
+# A example of what can be done:
+#   - Postgresql PRIMRARY DB server
+#   - Postgresql SECONDRY DB server
+# I want to have the following
+#   - Grafana danshboard for resource monitoring
+#   - Prometheus to scrape system metrics
+#   - Netshoot as a general purpose container with utilities
+#
+# This mounts the parent dir where the compose file is found and makes it
+# available inside the container.
+# --->
+#  volumes:
+#    - "./:/hostdata"   
+# <---
+# In the container do 'cd /hostdata' to access files from the docker host.
+#
+# Sun 2022Dec04 18:35:39 PST -- add several centos containers
+# Mon 2023Jan16 17:18:03 PST -- add splunk container
+#
+version: "2.13.0"
+
+services:
+
+#
+# PRIMARY - CentOS8
+#  
+  centos8-1:
+    image: centos:8.4.2105
+    hostname: centos8-11
+    container_name: c811
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+
+#
+# SECONDARY - CentOS8
+#  
+  centos8-2:
+    image: centos:8.4.2105
+    hostname: centos8-12
+    container_name: c812
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD - CentOS8
+#  
+  centos8-3:
+    image: centos:8.4.2105
+    hostname: centos8-13
+    container_name: c813
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 

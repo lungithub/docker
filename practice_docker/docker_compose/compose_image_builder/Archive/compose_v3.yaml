@@ -1,0 +1,117 @@
+#
+# In this config all containers can talk to each other on the given networks.
+# But the ip address given in one network can be on the same range as the one
+# given on another netwrok. I want all to be different VLANS.
+#
+# https://stackoverflow.com/questions/72216583/docker-compose-networking-priority-property-ignored
+#
+# Fri 2023Jun02 22:18:26 PDT
+#
+# version: "2.13.0"
+
+services:
+
+#
+# NETUTILS
+#  
+  netutils:
+    image: nicolaka/netshoot
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.3"
+      net2:
+        priority: 0
+      net3:
+        priority: 0
+    hostname: netutils
+    container_name: netutils2
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"         
+    command: ["sleep", "infinity"]
+
+#
+# FIRST - CentOS8
+#  
+  centos8-1:
+    image: centos:8.4.2105
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.2"
+      net2:
+        priority: 0
+      net3:
+        priority: 0
+    hostname: centos8-11
+    container_name: c811
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"      
+    command: ["sleep", "infinity"]      
+#
+# SECOND - CentOS8
+#  
+  centos8-2:
+    image: centos:8.4.2105
+    networks:
+      net1:
+        priority: 0
+      net2:
+        priority: 20
+        ipv4_address: "172.25.1.2"            
+      net3:
+        priority: 0
+    hostname: centos8-12
+    container_name: c812
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+#
+# THIRD - CentOS8
+#  
+  centos8-3:
+    image: centos:8.4.2105
+    networks:   
+      net1:
+        priority: 0
+      net2:
+        priority: 0        
+      net3:
+        priority: 30
+        ipv4_address: "172.26.1.2"           
+    hostname: centos8-13
+    container_name: c813
+    privileged: true
+    entrypoint: ["/usr/sbin/init"]    
+    restart: on-failure
+    volumes:
+      - "./:/hostdata"    
+    command: ["sleep", "infinity"] 
+
+networks:
+  net1:
+    ipam: 
+      driver: default
+      config:
+        - subnet: "172.24.0.0/16"
+          ip_range: "172.24.1.0/16"
+  net2:
+    ipam: 
+      driver: default
+      config:
+        - subnet: "172.25.0.0/16"
+          ip_range: "172.25.1.0/16"
+  net3:
+    ipam: 
+      driver: default
+      config:
+        - subnet: "172.26.0.0/16" 
+          ip_range: "172.26.1.0/16"

@@ -1,0 +1,17 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    systemd \
+    systemd-sysv \
+    dbus && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/systemd/system && \
+    echo "[Unit]\nDescription=Dummy Service\nAfter=network.target\n\n[Service]\nType=simple\nExecStart=/bin/sleep infinity\nRestart=always\n\n[Install]\nWantedBy=multi-user.target" > /etc/systemd/system/dummy.service && \
+    systemctl enable dummy
+
+ENV container docker
+STOPSIGNAL SIGRTMIN+3
+CMD ["/lib/systemd/systemd"]

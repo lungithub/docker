@@ -70,91 +70,91 @@ services:
 # PROMETHEUS
 # Sun 2022Dec04 18:35:39 PST
 #   
-  # prometheus-2:
-  #   image: prom/prometheus
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.50'     # Limit to 50% of a single CPU core
-  #         memory: 512M     # Limit to 512 Megabytes of RAM        
-  #   hostname: prometheus-2
-  #   container_name: prometheus-2
-  #   networks:
-  #     net1:
-  #       priority: 10
-  #       ipv4_address: "172.24.1.15"
-  #     net2:
-  #       priority: 0
-  #     net3:
-  #       priority: 0     
-  #   command:
-  #     - '--config.file=/etc/prometheus/prometheus.yml'
-  #   ports:
-  #     - 9090:9090
-  #   restart: unless-stopped
-  #   volumes:
-  #     - "./:/hostdata"  
-  #     - ./prometheus:/etc/prometheus
-  #     - prom_data:/prometheus
+  prometheus-2:
+    image: prom/prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'     # Limit to 50% of a single CPU core
+          memory: 512M     # Limit to 512 Megabytes of RAM        
+    hostname: prometheus-2
+    container_name: prometheus-2
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.15"
+      net2:
+        priority: 0
+      net3:
+        priority: 0     
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - "./:/hostdata"  
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
 
 #
 # GRAFANA
 # Sun 2022Dec04 18:35:39 PST
 #     
-  # grafana-2:
-  #   image: grafana/grafana
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.50'     # Limit to 50% of a single CPU core
-  #         memory: 512M     # Limit to 512 Megabytes of RAM    
-  #   hostname: grafana-2
-  #   container_name: grafana-2
-  #   networks:
-  #     net1:
-  #       priority: 10
-  #       ipv4_address: "172.24.1.16"
-  #     net2:
-  #       priority: 0
-  #     net3:
-  #       priority: 0     
-  #   ports:
-  #     - 3000:3000
-  #   restart: unless-stopped
-  #   environment:
-  #     - GF_SECURITY_ADMIN_USER=admin
-  #     - GF_SECURITY_ADMIN_PASSWORD=grafana
-  #   volumes:
-  #     - "./:/hostdata"      
-  #     - ./grafana:/etc/grafana/provisioning/datasources
+  grafana-2:
+    image: grafana/grafana
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'     # Limit to 50% of a single CPU core
+          memory: 512M     # Limit to 512 Megabytes of RAM    
+    hostname: grafana-2
+    container_name: grafana-2
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.16"
+      net2:
+        priority: 0
+      net3:
+        priority: 0     
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - "./:/hostdata"      
+      - ./grafana:/etc/grafana/provisioning/datasources
 
 #
 # PORTAINER
 # Sun 2022Dec04 18:35:39 PST
 #
-  # portainer-2:
-  #   image: portainer/portainer-ce:alpine
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         cpus: '0.50'     # Limit to 50% of a single CPU core
-  #         memory: 512M     # Limit to 512 Megabytes of RAM      
-  #   hostname: portainer-2
-  #   container_name: portainer-2
-  #   networks:
-  #     net1:
-  #       priority: 10
-  #       ipv4_address: "172.24.1.17"
-  #     net2:
-  #       priority: 0
-  #     net3:
-  #       priority: 0     
-  #   command: -H unix:///var/run/docker.sock
-  #   ports:
-  #     - "9010:9000"
-  #   volumes:
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #     - "portainer_data:/app"
+  portainer-2:
+    image: portainer/portainer-ce:alpine
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'     # Limit to 50% of a single CPU core
+          memory: 512M     # Limit to 512 Megabytes of RAM      
+    hostname: portainer-2
+    container_name: portainer-2
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.17"
+      net2:
+        priority: 0
+      net3:
+        priority: 0     
+    command: -H unix:///var/run/docker.sock
+    ports:
+      - "9010:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "portainer_data:/app"
   #   restart: always
 
 ###########################################################
@@ -164,8 +164,7 @@ services:
 # Ansible - Control
 #  
   ansiblecontrol:
-    # image: arm64v8/ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -185,17 +184,22 @@ services:
     hostname: ansiblecontrol
     container_name: ansiblecontrol
     entrypoint: ["/usr/sbin/init"]
+    tty: true
+    stdin_open: true
     privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]    
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock  
 
 #
 # Ansible - Agent1
 #  
   ansibleagent1:
-    image: dockio/u2204-arm64v8:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -215,17 +219,21 @@ services:
     hostname: ansibleagent1
     container_name: ansibleagent1
     entrypoint: ["/usr/sbin/init"]
-    privileged: true    
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]  
-
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock  
 #
 # Ansible - Agent2
 #  
   ansibleagent2:
-    image: dockio/u2204-arm64v8:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -245,11 +253,16 @@ services:
     hostname: ansibleagent2
     container_name: ansibleagent2
     entrypoint: ["/usr/sbin/init"]    
-    privileged: true    
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]  
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock   
     
 ###########################################################
 #########       POSTGRESQL
@@ -258,8 +271,7 @@ services:
 # WITNESS - Ubuntu
 #  
   witness:
-    # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -279,19 +291,22 @@ services:
     hostname: witness
     container_name: witness
     entrypoint: ["/usr/sbin/init"]       
-    privileged: true
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]  
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock    
 
 #
 # FIRST - Ubuntu
 #  
   pgnode1:
-    # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
-    # image: dockio/pgnode1-snapshot:20251007-151621
+    image: dockio/u2404-x86_64-devesp:1.0   
     deploy:
       resources:
         limits:
@@ -312,18 +327,21 @@ services:
     hostname: pgnode1
     container_name: pgnode1    
     entrypoint: ["/usr/sbin/init"]
-    privileged: true
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"      
-    command: ["sleep", "infinity"]      
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock        
 #
 # SECOND - Ubuntu
 #  
   pgnode2:
-    # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
-    # image: dockio/pgnode2-snapshot:20251007-151709
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -344,19 +362,21 @@ services:
     hostname: pgnode2
     container_name: pgnode2
     entrypoint: ["/usr/sbin/init"]
-    privileged: true  
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
-
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock  
 #
 # THIRD - Ubuntu
 #  
   pgnode3:
-    # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
-    # image: dockio/pgnode3-snapshot:20251007-151759
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -376,19 +396,22 @@ services:
         ipv4_address: "172.26.1.23"           
     hostname: pgnode3
     entrypoint: ["/usr/sbin/init"]
-    container_name: pgnode3
-    privileged: true  
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock   
 
 #
 # THIRD - Ubuntu
 #  
   client1:
-    # image: ubuntu:22.04
-    image: dockio/u2204-arm64v8:1.0
+    image: dockio/u2404-x86_64-devesp:latest
     deploy:
       resources:
         limits:
@@ -396,23 +419,24 @@ services:
           memory: 512M     # Limit to 512 Megabytes of RAM
         reservations:
             cpus: '0.25'
-            memory: 128M             
-    networks:   
+            memory: 128M          
+    networks:
       net1:
-        priority: 0
-      net2:
-        priority: 0        
-      net3:
-        priority: 30
-        ipv4_address: "172.26.1.24"           
+        priority: 10
+        ipv4_address: "172.24.1.10"
     hostname: client1
-    entrypoint: ["/usr/sbin/init"]
     container_name: client1
-    privileged: true  
+    entrypoint: ["/usr/sbin/init"]
+    tty: true
+    stdin_open: true
+    privileged: true 
     restart: on-failure
     volumes:
-      - "./:/hostdata"    
-    command: ["sleep", "infinity"] 
+      - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    tmpfs:
+      - /run
+      - /run/lock  
 
 ##########################################################
 #########       SONAR
@@ -422,25 +446,25 @@ services:
 # login: admin
 # password: admin
 #
-  # sonarqube:
-  #   image: sonarqube:2025.5.0-developer
-  #   networks:
-  #     net1:
-  #       priority: 10
-  #       ipv4_address: "172.24.1.30"
-  #     net2:
-  #       priority: 0
-  #     net3:
-  #       priority: 0
-  #   hostname: sonarqube
-  #   container_name: sonarqube
-  #   restart: on-failure
-  #   environment:
-  #     - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-  #   ports:
-  #     - "9001:9000"
-  #   volumes:
-  #     - "./:/hostdata"  
+  sonarqube:
+    image: sonarqube:2025.5.0-developer
+    networks:
+      net1:
+        priority: 10
+        ipv4_address: "172.24.1.30"
+      net2:
+        priority: 0
+      net3:
+        priority: 0
+    hostname: sonarqube
+    container_name: sonarqube
+    restart: on-failure
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    ports:
+      - "9001:9000"
+    volumes:
+      - "./:/hostdata"  
 
 ###########################################################
 #########       NETWORK

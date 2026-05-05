@@ -1,0 +1,19 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    systemd \
+    systemd-sysv \
+    dbus \
+    openssh-server && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN systemctl set-default multi-user.target && \
+    systemctl enable ssh
+
+ENV container docker
+
+STOPSIGNAL SIGRTMIN+3
+
+CMD ["/lib/systemd/systemd"]

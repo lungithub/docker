@@ -150,7 +150,6 @@ services:
       net3:
         priority: 0
     hostname: ansiblecontrol
-    entrypoint: ["/usr/sbin/init"]
     container_name: ansiblecontrol
     privileged: true 
     restart: on-failure
@@ -172,7 +171,6 @@ services:
       net3:
         priority: 0
     hostname: ansibleagent1
-    entrypoint: ["/usr/sbin/init"]
     container_name: ansibleagent1
     privileged: true    
     restart: on-failure
@@ -194,7 +192,6 @@ services:
       net3:
         priority: 0
     hostname: ansibleagent2
-    entrypoint: ["/usr/sbin/init"]
     container_name: ansibleagent2
     privileged: true    
     restart: on-failure
@@ -220,7 +217,6 @@ services:
       net3:
         priority: 0
     hostname: witness
-    entrypoint: ["/usr/sbin/init"]    
     container_name: witness
     privileged: true
     restart: on-failure
@@ -243,7 +239,6 @@ services:
       net3:
         priority: 0
     hostname: pgnode1
-    entrypoint: ["/usr/sbin/init"]
     container_name: pgnode1
     privileged: true
     restart: on-failure
@@ -265,7 +260,6 @@ services:
       net3:
         priority: 0
     hostname: pgnode2
-    entrypoint: ["/usr/sbin/init"]
     container_name: pgnode2
     privileged: true  
     restart: on-failure
@@ -288,7 +282,6 @@ services:
         priority: 30
         ipv4_address: "172.26.1.23"           
     hostname: pgnode3
-    entrypoint: ["/usr/sbin/init"]
     container_name: pgnode3
     privileged: true  
     restart: on-failure
@@ -305,19 +298,19 @@ networks:
       driver: default
       config:
         - subnet: "172.24.0.0/16"
-          ip_range: "172.24.1.0/24"
+          ip_range: "172.24.1.0/16"
   net2:
     ipam: 
       driver: default
       config:
         - subnet: "172.25.0.0/16"
-          ip_range: "172.25.1.0/24"
+          ip_range: "172.25.1.0/16"
   net3:
     ipam: 
       driver: default
       config:
         - subnet: "172.26.0.0/16" 
-          ip_range: "172.26.1.0/24"
+          ip_range: "172.26.1.0/16"
 
 volumes:
   # portainer
