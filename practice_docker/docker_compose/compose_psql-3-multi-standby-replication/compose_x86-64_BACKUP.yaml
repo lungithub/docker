@@ -164,7 +164,7 @@ services:
 # Ansible - Control
 #  
   ansiblecontrol:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -190,6 +190,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock  
@@ -198,7 +199,7 @@ services:
 # Ansible - Agent1
 #  
   ansibleagent1:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -224,6 +225,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock  
@@ -231,7 +233,7 @@ services:
 # Ansible - Agent2
 #  
   ansibleagent2:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -257,6 +259,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock   
@@ -268,7 +271,7 @@ services:
 # WITNESS - Ubuntu
 #  
   witness:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -294,6 +297,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock    
@@ -302,7 +306,7 @@ services:
 # FIRST - Ubuntu
 #  
   pgnode1:
-    image: dockio/u2404-arm64-devesp:1.0   
+    image: dockio/u2404-x86_64-devesp:1.0   
     deploy:
       resources:
         limits:
@@ -329,6 +333,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock        
@@ -336,7 +341,7 @@ services:
 # SECOND - Ubuntu
 #  
   pgnode2:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -363,6 +368,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock  
@@ -370,7 +376,7 @@ services:
 # THIRD - Ubuntu
 #  
   pgnode3:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:1.0
     deploy:
       resources:
         limits:
@@ -396,6 +402,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock   
@@ -404,7 +411,7 @@ services:
 # THIRD - Ubuntu
 #  
   client1:
-    image: dockio/u2404-arm64-devesp:1.0
+    image: dockio/u2404-x86_64-devesp:latest
     deploy:
       resources:
         limits:
@@ -426,6 +433,7 @@ services:
     restart: on-failure
     volumes:
       - "./:/hostdata"
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     tmpfs:
       - /run
       - /run/lock  
